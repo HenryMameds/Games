@@ -1,0 +1,147 @@
+--Plataforma
+select LPAD(cd_plataforma, 3, '0') Codigo, nome_plataforma Nome from Plataforma;
+
+----------------------------------------------
+--Distribuidor
+select LPAD(cd_distribuidor, 5, '0') Codigo, nome_distribuidor Nome from distribuidor;
+
+----------------------------------------------
+--Desenvolvedor
+select LPAD(cd_desenvolvedor, 5, '0') CODIGO,  nome_desenvolvedor Nome from desenvolvedor; 
+----------------------------------------------
+--Categoria
+select LPAD(cd_categoria, 3, '0') CODIGO, nome_categoria Nome from Categoria; 
+drop table categoria cascade constraints;
+create table categoria (
+cd_categoria number(3)
+,nome_categoria varchar(42)  NOT NULL UNIQUE
+,desc_categoria varchar(100)  NOT NULL
+,data_cadastro_categoria date default sysdate
+,constraint categoria_cd_pk primary key(cd_categoria)
+);
+----------------------------------------------
+--Idioma
+select LPAD(cd_idioma, 3, '0') CODIGO, nome_idioma Idioma, sigla_idioma SIGLA, dt_cadastro_idioma "DT CADASTRO" from idioma
+
+----------------------------------------------
+--Produto
+select LPAD(p.cd_produto, 10, '0') CODIGO, p.nome_produto Nome, p.desc_produto Descrição
+, p.imagem_produto IMG, p.vl_produto Preço
+,p.clas_indic_produto "Class. Indicativa"
+,decode(p.atv_produto,
+    '0', 'Não',
+    '1', 'Sim') AS ATV
+,decode(p.dlc_produto,
+    '0', 'Não',
+    '1', 'Sim') AS DLC
+,pro.nome_produto "Produto Base"
+,p.dt_lanc_produto "Lançamento"
+,p.dt_cadastro_produto "DT Cadastro"
+,pla.nome_plataforma Plataforma
+,de.nome_desenvolvedor Desenvolvedor
+,di.nome_distribuidor Distribuidor
+from produto p
+inner join plataforma pla
+ON (p.cd_plataforma = pla.cd_plataforma)
+inner join desenvolvedor de
+ON (p.cd_desenvolvedor = de.cd_desenvolvedor)
+inner join distribuidor di
+ON (p.cd_distribuidor = di.cd_distribuidor)
+left join produto pro
+ON (p.base_produto = pro.cd_produto)
+
+
+select  cd_produto, atv_produto,
+    decode(atv_produto,
+     '0', 'Não',
+    '1', 'Sim') AS ATIVO
+    from produto;
+
+----------------------------------------------
+--Idioma_Pro
+select p.nome_produto Produto, i.sigla_idioma  Sigla
+from produto p inner join idioma i on (p.cd_produto = i.cd_idioma)
+
+----------------------------------------------
+--Cliente
+select LPAD(cd_cliente, 3, '0') Codigo, nome_cliente Nome  from cliente; 
+
+----------------------------------------------
+--	Favoritos
+select LPAD(cd_produto, 3, '0') Codigo, cd_cliente "Codigo do Cliente" from favoritos;
+
+select LPAD(c.cd_cliente, 10, '0') CODIGO, c.nome_ex_cliente "Apelido", p.nome_produto "Nome do Produto",
+p.imagem_produto IMG, p.vl_produto Preço from cliente c inner join favoritos f 
+on (c.cd_cliente = f.cd_cliente)
+inner join produto p 
+on (p.cd_produto = f.cd_produto) 
+
+----------------------------------------------	
+--Form_Pag
+select LPAD(cd_form_pag, 3, '0') Codigo, nome "Forma de pagamento" from form_pag
+
+-------------------------------------------------
+--Pedido
+
+select LPAD(p.cd_pedido, 10, '0') CODIGO, c.nome_cliente Cliente, dt_pedido "Data", situacao "SIT", f.nome "Form P.", p.vl_total_pedido "Total"
+from pedido p inner join cliente c ON (p.cd_cliente = c.cd_cliente)
+inner join form_pag f  ON (p.cd_form_pag = f.cd_form_pag)
+
+----------------------------------------------	
+--Item_pedido
+Select pe.cd_pedido Pedido, p.nome_produto Produto, p.vl_produto "Preço", it.desconto_item "Desconto" , pe.dt_pedido "Data"
+From produto p INNER JOIN item_pedido it
+ON (p.cd_produto = it.cd_produto)
+INNER JOIN pedido pe 
+ON (it.cd_pedido = pe.cd_pedido)
+
+
+
+----------------------------------------------
+--Chaves
+
+select LPAD(ch.cd_key, 10, '0') Codigo, num_key "Chave", p.nome_produto Produto
+,decode(ch.atv_key,
+    '0', 'Não',
+    '1', 'Sim') AS ATV
+
+,ch.dt_add_key "Data" from chaves ch 
+inner join produto p ON (ch.cd_produto = p.cd_produto) order by ch.cd_key;
+
+
+----------------------------------------------
+--Colecao
+select cli.nome_ex_cliente Cliente, p.nome_produto Produto, ca.num_key Chave, co.dt_add_colecao from colecao co
+inner join produto p ON(p.cd_produto = co.cd_produto)
+inner join cliente cli ON (cli.cd_cliente = co.cd_cliente)
+inner join chaves ca ON (ca.cd_key = co.cd_key)
+
+
+----------------------------------------------
+-- Calcular Total Pedido
+
+  Select pe.cd_pedido Pedido, SUM(p.vl_produto -  it.desconto_item)AS "TL Pedido"
+  From Produto p INNER JOIN item_pedido it ON (p.cd_produto = it.cd_produto)
+  INNER JOIN Pedido pe ON (it.cd_pedido = pe.cd_pedido)
+    
+    
+  group by pe.cd_pedido
+
+
+
+-------------------------------------------
+
+-- SUb-total e Total Geral
+
+Select  pe.cd_pedido Pedido,  p.cd_produto Produto, 
+CASE
+         WHEN p.cd_produto IS NULL AND pe.cd_pedido IS NOT NULL
+             THEN 'SUB-TOTAL'
+        WHEN pe.cd_pedido IS NULL
+             THEN 'TOTAL-GERAL'
+     END INFO,
+  SUM(p.vl_produto - it.desconto_item) AS "Total"
+From Produto p INNER JOIN item_pedido it ON (p.cd_produto = it.cd_produto)
+INNER JOIN Pedido pe ON (it.cd_pedido = pe.cd_pedido)
+
+group by rollup(pe.cd_pedido, p.cd_produto)
