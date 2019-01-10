@@ -1,0 +1,175 @@
+drop table plataforma cascade constraints;
+create table plataforma(
+cd_plataforma number(3)
+,nome_plataforma varchar(42) NOT NULL  UNIQUE
+,dt_cadastro date default sysdate 
+,constraint plataforma_cd_pk primary key(cd_plataforma)
+);
+
+
+drop table distribuidor cascade constraints; 
+create table distribuidor(
+cd_distribuidor number(5)
+,nome_distribuidor varchar(42) NOT NULL UNIQUE
+,site_distribuidor varchar(200)
+,dt_cadastro_distribuidor date default sysdate
+,constraint distribuidor_cd_pk primary key(cd_distribuidor)
+);
+
+
+drop table desenvolvedor cascade constraints;
+create table desenvolvedor(
+cd_desenvolvedor number(5)
+,nome_desenvolvedor varchar(42)  NOT NULL  UNIQUE
+,site_desenvolvedor varchar(200)
+,dt_cadastro_desenvolvedor  date default sysdate
+,constraint desenvolvedor_cd_pk primary key(cd_desenvolvedor)
+);
+
+
+drop table categoria cascade constraints;
+create table categoria (
+cd_categoria number(5)
+,nome_categoria varchar(42)  NOT NULL UNIQUE
+,desc_categoria varchar(100)  NOT NULL
+,data_cadastro_categoria date default sysdate
+,constraint categoria_cd_pk primary key(cd_categoria)
+);
+
+drop table idioma cascade constraints;
+
+create table idioma(
+cd_idioma number(3)
+,sigla_idioma varchar(3)  NOT NULL UNIQUE
+,nome_idioma varchar(42)  NOT NULL UNIQUE
+,dt_cadastro_idioma date default sysdate
+,constraint idioma_cd_pk primary key(cd_idioma)
+);
+
+
+drop table produto cascade constraints;
+create table produto (
+cd_produto number(10) 
+,nome_produto varchar(100) UNIQUE NOT NULL
+,desc_produto varchar(200) NOT NULL
+,imagem_produto varchar(250) 
+,vl_produto number(6,2) NOT NULL
+,clas_indic_produto  varchar(2) NOT NULL
+--,atv_produto raw
+,atv_produto char(1)  NOT NULL
+,dlc_produto char(1) NOT NULL
+,base_produto number(10)
+,dt_lanc_produto date
+,dt_cadastro_produto date default sysdate
+,cd_desenvolvedor number(5)
+,cd_distribuidor number(5)
+,cd_plataforma number(3) not null
+,constraint produto_cd_pk primary key(cd_produto)
+,constraint produto_cd_plataforma_fk foreign key(cd_plataforma) references plataforma(cd_plataforma)
+,constraint produto_cd_desenvolvedor_fk foreign key(cd_desenvolvedor) references  desenvolvedor(cd_desenvolvedor)
+,constraint produto_cd_distribuidor_fk foreign key(cd_distribuidor) references distribuidor(cd_distribuidor)
+,constraint check_atv_produto check (atv_produto in (0,1))
+,constraint check_dlc_produto check (dlc_produto in (0,1))
+,constraint check_vl_produto check (vl_produto > 0)
+,constraint produto_base_fk foreign key(base_produto) references produto(cd_produto)
+);
+
+drop table idioma_pro cascade constraints;
+create table idioma_pro(
+cd_idioma number(3)
+,cd_produto number(10)
+,constraint idioma_pro_cd_idioma_fk foreign key(cd_idioma) references idioma(cd_idioma)
+,constraint idioma_pro_cd_produto_fk foreign key (cd_produto) references produto(cd_produto)
+,constraint idioma_pro_pk primary key(cd_produto, cd_idioma)
+);
+
+drop table sub_cat cascade constraints;
+create table sub_cat(
+cd_produto number(10) 
+,cd_categoria number(5)
+,dt_add_sub_cat date default sysdate
+,constraint sub_cat_produto_fk foreign key (cd_produto) references produto(cd_produto)
+,constraint sub_cat_categoria_fk foreign key (cd_categoria) references categoria(cd_categoria)
+, constraint sub_cat_pk primary key(cd_produto, cd_categoria)
+);
+
+drop table cliente cascade constraints;
+create table cliente (
+	cd_cliente number(10) 
+	,nome_cliente varchar2(20) NOT NULL
+	,cliente_sobrenome varchar2(20) NOT NULL
+	,login_cliente varchar2(20) NOT NULL UNIQUE
+	,email_cliente varchar2(80) NOT NULL UNIQUE
+	,senha_cliente varchar2(100) NOT NULL 
+	,dt_nasc_cliente date
+	,nome_ex_cliente varchar2(30) NOT NULL UNIQUE
+	,constraint cliente_pk primary key(cd_cliente)
+);
+
+
+drop table favoritos cascade constraints;
+create table favoritos (
+	cd_cliente number(10)
+	,cd_produto number(10)
+	,dt_add_favorito date default sysdate
+	,constraint favorito_prod_fk foreign key (cd_produto) references produto(cd_produto)
+	,constraint favorito_clie_fk foreign key (cd_cliente) references cliente(cd_cliente)
+	,constraint favorito_pk primary key (cd_cliente, cd_produto)
+);
+drop table form_pag cascade constraints;
+create table form_pag (
+	cd_form_pag number(2)
+	,nome varchar2(30) NOT NULL
+	,dt_cadastro date default sysdate
+	,constraint form_pag_pk primary key (cd_form_pag)
+);
+
+drop table pedido cascade constraints;
+create table pedido (
+	cd_pedido number(10)
+	,cd_cliente number(10) NOT NULL
+	,vl_total_pedido number(6,2)
+	,dt_pedido date NOT NULL
+	,situacao varchar2(15) NOT NULL
+	,cd_form_pag NOT NULL
+	,constraint pedido_fk foreign key (cd_cliente) references cliente(cd_cliente)
+	,constraint pedido_formpag_fk foreign key (cd_form_pag) references form_pag(cd_form_pag) 
+	,constraint pedido_pk primary key (cd_pedido)
+);
+
+
+drop table item_pedido cascade constraints;
+create table item_pedido (
+	id_item number(10)
+	,cd_pedido number(10) NOT NULL
+	,cd_produto number(10) NOT NULL
+	,desconto_item number(4,2) NULL
+	,constraint item_pedido_fk foreign key (cd_pedido) references pedido(cd_pedido)
+	,constraint item_produto_fk foreign key (cd_produto) references produto(cd_produto)
+	,constraint item_id_pk primary key (id_item) 
+);
+
+drop table chaves cascade constraints;
+create table chaves (
+    cd_key number(10)
+    ,cd_produto number(10) NOT NULL	
+    ,dt_add_key date
+    ,num_key varchar2(40) UNIQUE
+    ,atv_key char(1)
+    ,constraint key_pk primary key (cd_key)
+    ,constraint produto_cd_fk foreign key(cd_produto) references produto(cd_produto)
+);
+
+
+drop table colecao cascade constraints;
+create table colecao (
+
+	cd_key number(20) NOT NULL UNIQUE
+	,cd_cliente  number(10)
+    ,cd_produto number(10) UNIQUE NOT NULL
+	,dt_add_colecao date 
+	,constraint colecao_clie_fk foreign key (cd_cliente) references cliente(cd_cliente)
+	,constraint colecao_key_fk foreign key (cd_key) references chaves(cd_key)
+	,constraint colecao_pk primary key (cd_cliente)
+    ,constraint colecao_produto_fk foreign key(cd_produto) references produto(cd_produto)
+);
