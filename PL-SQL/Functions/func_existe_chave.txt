@@ -1,0 +1,11 @@
+create or replace FUNCTION existe_chave(
+vNum IN  chaves.num_key%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+
+    SELECT count(num_key) into vCont from chaves where num_key = vNum; 
+
+    RETURN (vCont); 
+END;

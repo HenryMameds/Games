@@ -1,0 +1,49 @@
+CREATE OR REPLACE PROCEDURE sp_insert_idioma_pro (
+    vIdioma IN idioma.cd_idioma%type
+    ,vProduto IN produto.cd_produto%type
+) IS 
+ vNomeProduto produto.nome_produto%type;
+ vNomeIdioma idioma.nome_idioma%type;
+ eFk_Erro EXCEPTION;
+ PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+ Begin
+
+        --Idioma
+        SELECT nome_idioma INTO vNomeIdioma from idioma where cd_idioma = vIdioma;
+        --Produto
+        SELECT nome_produto INTO vNomeProduto from produto where cd_produto = vProduto;
+
+    INSERT INTO Idioma_Pro 
+    (cd_idioma, cd_produto)
+    VALUES
+    (vIdioma, vProduto);
+
+    dbms_output.put_line('Idioma [' || vNomeIdioma || '] Cadastrado ao produto [' || vNomeProduto || '] ');
+    COMMIT;
+
+    EXCEPTION
+
+         WHEN eFk_erro THEN
+        
+            RAISE_APPLICATION_ERROR(-20002,'Erro ao cadastrar Idioma [' || vNomeIdioma || '] ao produto [' || vNomeProduto || ']  Verifique se o valor informado em: '   
+            || chr(10) || ' - Idioma '
+            || chr(10) || ' - Produto '
+            || chr(10) || ' Realmente existe no bando de dados.'); 
+        
+        WHEN dup_val_on_index THEN            
+            
+            RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                    
+        WHEN no_data_found THEN 
+        
+            RAISE_APPLICATION_ERROR(-20001,'Valores não encontrados, verique se '
+            || chr(10) || ' - Idioma'
+            || chr(10) || ' - Produto'             
+            || chr(10) || ' - Realmente existem no bando de dados.');    
+
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar idioma [' || vNomeIdioma || ']' || ' ao produto ' || vNomeProduto);
+                  
+ END sp_insert_idioma_pro;

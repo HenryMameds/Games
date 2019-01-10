@@ -1,0 +1,13 @@
+CREATE OR REPLACE FUNCTION existe_distribuidor(
+vNome distribuidor.nome_distribuidor%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+    
+    SELECT count(nome_distribuidor) into vCont from distribuidor where nome_distribuidor = vNome;
+    
+    RETURN (vCont);
+
+    
+END;

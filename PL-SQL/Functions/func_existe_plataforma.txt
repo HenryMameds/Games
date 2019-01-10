@@ -1,0 +1,12 @@
+create or replace FUNCTION existe_plataforma(
+vNome plataforma.nome_plataforma%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+
+    SELECT count(nome_plataforma) into vCont from plataforma where nome_plataforma = vNome;
+
+    RETURN (vCont);
+
+END;

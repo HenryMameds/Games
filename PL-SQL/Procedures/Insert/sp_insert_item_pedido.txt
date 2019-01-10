@@ -1,0 +1,97 @@
+CREATE OR REPLACE PROCEDURE sp_insert_item_pedido(
+ vPedido pedido.cd_pedido%type
+ ,vProduto produto.cd_produto%type
+ ,vDesc item_pedido.desconto_item%type
+
+ )   IS 
+vCliente cliente.cd_cliente%type;
+vApelido cliente.nome_ex_cliente%type;
+vNome_Pro produto.nome_produto%type;
+vCont number;
+vCont_Item number;
+vCod item_pedido.id_item%type;
+
+vAtv_produto produto.atv_produto%type;
+
+--EXCEPTION
+eFk_Erro EXCEPTION;
+erpro EXCEPTION;
+erInatPro EXCEPTION;
+erPedido EXCEPTION;
+evalor EXCEPTION;
+
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+ BEGIN
+    
+   SELECT faixa_id_pedido.nextval into vCod from dual; 
+   
+   -- Cliente
+   SELECT cd_cliente into vCliente from cliente where cd_cliente = (select cd_cliente from pedido where cd_pedido = vPedido);
+   
+    --Produto
+   SELECT count(cd_produto) into vCont from colecao where cd_produto = vProduto and  cd_cliente = vCliente ;
+   select count(cd_produto) into vCont_Item from item_pedido where cd_produto = vProduto and  cd_pedido = vPedido ;
+   
+   SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+   SELECT nome_produto into vNome_Pro from produto where cd_produto = vProduto;  
+   
+   SELECT atv_produto into vAtv_produto FROM produto where cd_produto = vProduto;
+    
+    IF(vCont > 0)  THEN RAISE erpro; END IF;
+    
+    IF(vCont_Item > 0) THEN RAISE erPedido; END IF;
+    
+    IF(vAtv_produto = 0) THEN  RAISE erInatPro; END IF;
+    
+    IF(vDesc < 0 ) THEN RAISE evalor; END IF;
+             
+     INSERT INTO item_pedido
+     (id_item, cd_pedido, cd_produto, desconto_item)
+     VALUES
+     (vCod, vPedido, vProduto, vDesc);
+        
+     dbms_output.put_line('Produto/Item adicionado [' || vNome_Pro || '] Ao pedido  ' || LPAD(vPedido, 10, '0') || ' de ' || vApelido );
+    COMMIT;
+           
+    EXCEPTION
+        WHEN erpro THEN
+        
+        RAISE_APPLICATION_ERROR(-20204, 'ERRO: Produto [' || vNome_Pro || '] já está adicionado a coleção de ' || vApelido);
+        
+        
+        WHEN erPedido THEN
+        
+         RAISE_APPLICATION_ERROR(-20207, 'ERRO: Produto [' || vNome_Pro || '] já está adicionado ao pedido ' || LPAD(vPedido, 10, '0'));
+         
+        WHEN erInatPro THEN
+    
+          RAISE_APPLICATION_ERROR(-20208, 'Produto inativo');
+         
+        WHEN dup_val_on_index THEN            
+            
+              RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+        WHEN no_data_found THEN
+        
+           RAISE_APPLICATION_ERROR(-20001, 'Valores não encontrados, verique se '
+             || chr(10) || ' - Produto'
+             || chr(10) || ' - Pedido'      
+             || chr(10) || ' - Realmente existem no bando de dados.'); 
+             
+     WHEN eFk_erro THEN
+     
+         RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+         || chr(10) || ' - Produto'
+         || chr(10) || ' - Pedido'
+         || chr(10) || ' - Realmente existem no bando de dados.'); 
+         
+     WHEN evalor THEN
+    
+        RAISE_APPLICATION_ERROR(-20201, 'Valor informado no desconto é inválido.'); 
+                 
+     WHEN OTHERS THEN
+            
+      RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar adicionar item [' || vNome_pro || ']' || ' ao pedido ' || LPAD(vPedido, 10, '0'));
+                  
+ END sp_insert_item_pedido;
+  

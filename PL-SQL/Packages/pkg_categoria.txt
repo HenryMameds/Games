@@ -1,0 +1,240 @@
+CREATE OR REPLACE PACKAGE pkg_categoria
+IS
+   
+    PROCEDURE sp_insert_categoria(vNome  IN  categoria.nome_categoria%type, vDesc IN categoria.desc_categoria%type);    
+    PROCEDURE sp_update_categoria(vCod categoria.cd_categoria%type,vNome  IN  categoria.nome_categoria%type, vDesc IN categoria.desc_categoria%type);
+    PROCEDURE sp_delete_categoria(vCod categoria.cd_categoria%type); 
+    
+    --- SUB CAT --
+    
+    PROCEDURE sp_insert_sub_cat (vProduto IN produto.cd_produto%type,vCategoria IN categoria.cd_categoria%type);
+    PROCEDURE sp_delete_sub_cat(vProduto produto.cd_produto%type,vCategoria categoria.cd_categoria%type);
+
+END; -- Fim Package categoria
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_categoria --Corpo
+IS
+
+PROCEDURE sp_insert_categoria(
+ vNome  IN  categoria.nome_categoria%type
+ ,vDesc IN categoria.desc_categoria%type
+ )  IS vCod categoria.cd_categoria%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_categoria(vNome) > 0) THEN RAISE erxiste; END IF;
+
+    SELECT faixa_cd_categoria.nextval INTO vCod FROM dual;
+        
+    INSERT INTO Categoria
+    (cd_categoria, nome_categoria, desc_categoria, data_cadastro_categoria)
+    VALUES
+    (vCod, UPPER(vNome), vDesc, SYSDATE);
+       
+    dbms_output.put_line('Categoria [' || vNome || '] Cadastrada com sucesso.');
+    COMMIT; 
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Categoria [' || vNome || ']' || ' Codigo duplicado.');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Categoria [' || vNome || ']' || ' Já está cadastrada no sistema.'); 
+                  
+        WHEN OTHERS THEN
+            
+          RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Categoria [' || vNome || ']');
+                  
+ END sp_insert_categoria;
+ 
+
+PROCEDURE sp_update_categoria(
+vCod categoria.cd_categoria%type
+,vNome  IN  categoria.nome_categoria%type
+,vDesc IN categoria.desc_categoria%type
+ )  IS 
+ erCdError EXCEPTION;
+ erxiste EXCEPTION;
+ vCount number(1);
+ BEGIN
+    
+   
+    
+    SELECT COUNT(cd_plataforma) into vCount from plataforma WHERE cd_plataforma = vCOd;
+    
+     IF(existe_categoria(vNome) > 0) THEN RAISE erxiste; END IF;
+     
+    IF(vCount > 0) THEN 
+    
+    UPDATE Categoria
+    SET nome_categoria = UPPER(vNome)
+    ,desc_categoria = vDesc
+    WHERE cd_categoria = vCod;
+       
+    dbms_output.put_line('Categoria de código [' || LPAD(vCod, 3, '0') || '] atualizada com sucesso.');
+    COMMIT; 
+    
+    ELSE 
+    
+    RAISE erCdError; 
+    
+    END IF;
+    
+    EXCEPTION
+        
+       WHEN no_data_found THEN           
+            
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar categoria, verifique se o código [' || LPAD(vCod, 3, '0') || ']' || ' está correto. ');
+         
+        WHEN erCdError THEN
+        
+        RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar categoria, verifique se o código [' ||  LPAD(vCod, 3, '0')|| ']' || ' está correto. ');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Categoria [' || vNome || ']' || ' já está cadastrada no sistema.'); 
+                  
+        WHEN OTHERS THEN
+            
+          RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Categoria [' || vNome || ']');
+                  
+ END sp_update_categoria;
+ 
+PROCEDURE sp_delete_categoria(
+vCod categoria.cd_categoria%type
+ )  IS 
+ vNome categoria.nome_categoria%type;
+ 
+ BEGIN
+    
+    SELECT nome_categoria into vNome from categoria where cd_categoria = vCod;
+     
+
+    
+        DELETE FROm Categoria
+        WHERE cd_categoria = vCod;
+           
+        dbms_output.put_line('Categoria [' || vNome || '] apagada com sucesso.');
+        COMMIT; 
+    
+
+    
+    EXCEPTION
+        
+       WHEN no_data_found THEN           
+            
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar categoria, verifique se o código [' || LPAD(vCod, 3, '0') || ']' || ' está correto. ');
+ 
+                  
+        WHEN OTHERS THEN
+            
+          RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar Categoria [' || vNome || ']');
+                  
+ END sp_delete_categoria;
+ 
+    --- SUB CAT
+PROCEDURE sp_insert_sub_cat (
+    vProduto IN produto.cd_produto%type
+    ,vCategoria IN categoria.cd_categoria%type
+)  IS
+vNomeProduto produto.nome_produto%type;
+vNome_Categoria categoria.nome_categoria%type;
+eFk_Erro EXCEPTION;
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+Begin
+
+        --Produto
+        SELECT nome_produto INTO vNomeProduto from produto where cd_produto = vProduto;
+        --Categoria
+        SELECT nome_categoria INTO vNome_Categoria from categoria where cd_categoria = vCategoria;
+
+    INSERT INTO Sub_Cat
+    (cd_produto, cd_categoria, dt_add_sub_cat)
+    VALUES
+    (vProduto, vCategoria, sysdate);
+
+    dbms_output.put_line('Categoria [' || vNome_Categoria || '] Cadastrado ao produto [' || vNomeProduto || '] ');
+    COMMIT;
+
+    EXCEPTION
+
+         WHEN eFk_erro THEN
+        
+            RAISE_APPLICATION_ERROR(-20002,'Erro ao cadastrar Categoria [' || vNome_Categoria || '] ao produto [' || vNomeProduto || ']  Verifique se o valor informado em: '   
+            || chr(10) || ' - Categoria '
+            || chr(10) || ' - Produto '
+            || chr(10) || ' Realmente existe no bando de dados.'); 
+        
+        WHEN dup_val_on_index THEN            
+            
+            RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                    
+        WHEN no_data_found THEN 
+        
+            RAISE_APPLICATION_ERROR(-20001,'Valores não encontrados, verique se '
+            || chr(10) || ' - Categoria'
+            || chr(10) || ' - Produto'             
+            || chr(10) || ' - Realmente existem no bando de dados.');    
+
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Categoria [' || vNome_Categoria || ']' || ' ao produto ' || vNomeProduto);
+                  
+ END sp_insert_sub_cat;
+   
+PROCEDURE sp_delete_sub_cat(
+vProduto produto.cd_produto%type
+,vCategoria categoria.cd_categoria%type
+)
+    Is vNomeProd produto.nome_produto%type;
+       vNomeCat categoria.nome_categoria%type;
+       eFk_Erro EXCEPTION;
+       vCont number(1);
+       
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+    BEGIN
+    
+    SELECT count(cd_categoria) into vCont from sub_cat where cd_produto = vProduto and cd_categoria = vCategoria;
+    
+    IF(vCont > 0) THEN 
+
+   SELECT nome_produto into vNomeProd from produto where cd_produto = vProduto;
+   SELECT nome_categoria into vNomeCat from categoria where cd_categoria = vCategoria;
+    
+    DELETE FROM sub_cat
+    where cd_categoria = vCategoria and cd_produto = vProduto;
+
+    dbms_output.put_line('Categoria [' || vNomeCat || '] Apagado com sucesso! Referente ao produto: [' || vNomeProd || ']');
+     COMMIT;
+     
+    ELSE 
+    
+    RAISE eFk_Erro; 
+    
+    END IF; 
+
+    EXCEPTION
+      
+       WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar categoria de código: [' || LPAD(vCategoria, 10, '0')|| ']' || chr(10) || 'Verifique se o código da categoria está correto.'  );
+        
+       WHEN eFk_erro THEN
+     
+        RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+        || chr(10) || ' - Categoria'
+        || chr(10) || ' - Produto'
+        || chr(10) || ' - Realmente existem no bando de dados.'); 
+         
+           
+       WHEN OTHERS THEN
+        
+        RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar a categoria, verifice se o codigo  [' ||  vCategoria || '] é válido' );
+              
+ END sp_delete_sub_cat;
+END; -- FIm Package Categoria / Sub_cat
+

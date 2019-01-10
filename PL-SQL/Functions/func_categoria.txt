@@ -1,0 +1,13 @@
+CREATE OR REPLACE FUNCTION existe_categoria(
+vNome categoria.nome_categoria%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+    
+    SELECT count(nome_categoria) into vCont from categoria where nome_categoria = vNome;
+    
+    RETURN (vCont);
+
+    
+END;

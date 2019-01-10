@@ -1,0 +1,32 @@
+CREATE OR REPLACE PROCEDURE sp_insert_form_pag(
+ vNome  IN  form_pag.nome%type
+ )  IS vCod form_pag.cd_form_pag%type;erxiste EXCEPTION;
+ BEGIN
+    
+     IF(existe_form_pag(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT faixa_cd_form_pag.nextval INTO vCod FROM dual;
+        
+    INSERT INTO Form_Pag
+    (cd_form_pag, nome, dt_cadastro)
+    VALUES
+    (vCod, UPPER(vNome), SYSDATE);
+        
+    dbms_output.put_line('Forma de pagamento [' || vNome || '] Cadastrada com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Forma de pagamento [' || vNome || ']' || ' Codigo duplicado.');
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Forma de pagamento [' || vNome || ']' || ' Já está cadastrada no sistema.'); 
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Forma de pagamento [' || vNome || ']');
+                  
+ END sp_insert_form_pag;

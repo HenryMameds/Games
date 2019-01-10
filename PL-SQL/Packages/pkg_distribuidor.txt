@@ -1,0 +1,128 @@
+CREATE OR REPLACE PACKAGE pkg_distribuidor
+IS
+PROCEDURE sp_insert_distribuidor(vNome  IN  distribuidor.nome_distribuidor%type, vSite IN distribuidor.site_distribuidor%type); 
+PROCEDURE sp_update_distribuidor(vCod IN distribuidor.cd_distribuidor%type,vNome IN distribuidor.nome_distribuidor%type, vSite IN distribuidor.site_distribuidor%type default null);
+PROCEDURE sp_delete_distribuidor(vCod distribuidor.cd_distribuidor%type);
+
+END; -- Fim Package distribuidor
+
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_distribuidor--Corpo
+IS
+PROCEDURE sp_insert_distribuidor(
+ vNome  IN  distribuidor.nome_distribuidor%type
+ ,vSite IN distribuidor.site_distribuidor%type
+ )  IS vCod distribuidor.cd_distribuidor%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_distribuidor(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT faixa_cd_distribuidor.nextval INTO vCod FROM dual;  
+    
+    INSERT INTO Distribuidor
+    (cd_distribuidor, nome_distribuidor, site_distribuidor, dt_cadastro_distribuidor)
+    VALUES
+    (vCod, UPPER(vNome), vSite, SYSDATE);
+        
+    dbms_output.put_line('Distribuidor [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+    
+        EXCEPTION
+        
+            WHEN dup_val_on_index THEN            
+            
+             RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Distribuidor [' || vNome || ']' || ' Codigo duplicado.');
+
+            WHEN erxiste THEN
+            
+             RAISE_APPLICATION_ERROR(-20202, 'EROO: Distribuidor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+            WHEN OTHERS THEN
+            
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Distribuidor [' || vNome || ']');
+                  
+ END sp_insert_distribuidor;
+ 
+PROCEDURE sp_update_distribuidor(
+	vCod IN distribuidor.cd_distribuidor%type
+	,vNome IN distribuidor.nome_distribuidor%type
+	,vSite IN distribuidor.site_distribuidor%type default null)
+IS 
+vCount number(1);
+
+erCdError EXCEPTION;
+erxiste EXCEPTION;
+
+ BEGIN
+    
+    SELECT COUNT(cd_distribuidor) into vCount FROM distribuidor WHERE cd_distribuidor = vCod;
+    
+    IF(vCount > 0) THEN
+    
+        IF(existe_distribuidor(vNome) > 0) THEN RAISE erxiste; END IF;
+
+        UPDATE Distribuidor SET nome_distribuidor = UPPER(vNome), 
+        site_distribuidor = vSite
+        where cd_distribuidor = vCod;
+
+        dbms_output.put_line('Distribuidor de Código [' || LPAD(vCod, 5, '0')|| '] Atualizado!');
+        COMMIT;
+        
+    ELSE
+    
+    RAISE erCdError;
+  
+    END IF;
+
+  EXCEPTION
+        
+         WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar Distribuidor de código: [' || LPAD(vCod, 10, '0')|| ']' || chr(10) || 'Verifique se o código do distribuidor está correto.'  );
+  
+        WHEN erCdError THEN
+        
+        RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar Distribuidor de código: [' || LPAD(vCod, 10, '0')|| ']' || chr(10) || 'Verifique se o código do distribuidor está correto.'  );
+        
+  		WHEN erxiste THEN
+            
+            RAISE_APPLICATION_ERROR(-20202, 'EROO: Distribuidor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizarr Distribuidor [' || vNome || ']');
+                  
+ END sp_update_distribuidor;
+
+
+PROCEDURE sp_delete_distribuidor(
+vCod distribuidor.cd_distribuidor%type
+
+ )   IS 
+vCount number(1);
+vNome distribuidor.nome_distribuidor%type;
+
+ BEGIN
+        
+      SELECT nome_distribuidor into vNome from distribuidor where cd_distribuidor = vCod;
+
+        delete from distribuidor 
+        where cd_distribuidor = vCod;
+            
+         dbms_output.put_line('Distribuidor [' || vNome || '] apagado com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar Distribuidor, verifique se o [' || LPAD(vCod, 5, '0') || '] informado é válido.');         
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar distribuidor de código: [' || LPAD(vCod, 5, '0') || ']' );
+            
+ END sp_delete_distribuidor;
+
+END; -- FIm Package distribuidor

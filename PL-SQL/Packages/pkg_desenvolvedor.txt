@@ -1,0 +1,128 @@
+CREATE OR REPLACE PACKAGE pkg_desenvolvedor
+IS
+   
+PROCEDURE sp_insert_desenvolvedor(vNome  IN  desenvolvedor.nome_desenvolvedor%type, vSite IN desenvolvedor.site_desenvolvedor%type);
+PROCEDURE sp_update_desenvolvedor(vCod desenvolvedor.cd_desenvolvedor%type, vNome  IN  desenvolvedor.nome_desenvolvedor%type, vSite IN desenvolvedor.site_desenvolvedor%type);
+PROCEDURE sp_delete_desenvolvedor(vCod desenvolvedor.cd_desenvolvedor%type);
+
+END; -- Fim Package desenvolvedor
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_desenvolvedor --Corpo
+IS
+PROCEDURE sp_insert_desenvolvedor(
+ vNome  IN  desenvolvedor.nome_desenvolvedor%type
+ ,vSite IN desenvolvedor.site_desenvolvedor%type
+ )  IS vCod desenvolvedor.cd_desenvolvedor%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_desenvolvedor(vNome) > 0) THEN RAISE erxiste; END IF;
+
+    SELECT faixa_cd_desenvolvedor.nextval INTO vCod FROM dual;      
+        
+    INSERT INTO Desenvolvedor
+    (cd_desenvolvedor, nome_desenvolvedor, site_desenvolvedor, dt_cadastro_desenvolvedor)
+    VALUES
+    (vCod, UPPER(vNome), vSite, SYSDATE);
+        
+    dbms_output.put_line('Desenvolvedor [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Desenvolvedor [' || vNome || ']' || ' Codigo duplicado.');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Desenvolvedor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Desenvolvedor [' || vNome || ']');
+                  
+ END sp_insert_desenvolvedor;
+
+/
+
+PROCEDURE sp_update_desenvolvedor(
+ vCod desenvolvedor.cd_desenvolvedor%type
+ ,vNome  IN  desenvolvedor.nome_desenvolvedor%type
+ ,vSite IN desenvolvedor.site_desenvolvedor%type
+ )  IS erCdError EXCEPTION; erxiste EXCEPTION; vCount number(1);
+ BEGIN
+    
+    SELECT COUNT(cd_desenvolvedor) INTO vCount FROM desenvolvedor WHERE cd_desenvolvedor = vCod;
+    
+    IF(vCount > 0) THEN
+    
+        IF(existe_desenvolvedor(vNome) > 0) THEN RAISE erxiste; END IF;
+                
+        UPDATE Desenvolvedor
+        SET nome_desenvolvedor = UPPER(vNome)
+        ,site_desenvolvedor = vSite
+        WHERE cd_desenvolvedor = vCod;
+            
+        dbms_output.put_line('Desenvolvedor de código [' || LPAD(vCod, 5, '0') || '] Atualizado com sucesso!');
+        COMMIT;
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+    
+    EXCEPTION
+    
+        WHEN no_data_found THEN
+        
+         RAISE_APPLICATION_ERROR(-20201, 'Erro tentar atualizar desenvolvedor de código [' || LPAD(vCod, 5, '0') || ']' || ' verifique se o código informado é válido.');
+    
+       WHEN erCdError THEN
+        
+         RAISE_APPLICATION_ERROR(-20209, 'Erro tentar atualizar desenvolvedor de código [' || LPAD(vCod, 5, '0') || ']' || ' verifique se o código informado é válido.');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Desenvolvedor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Desenvolvedor [' || vNome || ']');
+                  
+ END sp_update_desenvolvedor;
+ 
+PROCEDURE sp_delete_desenvolvedor(
+vCod desenvolvedor.cd_desenvolvedor%type
+
+ )   IS 
+vCount number(1);
+vNome desenvolvedor.nome_desenvolvedor%type;
+
+ BEGIN   
+        
+        SELECT nome_desenvolvedor into vNome from desenvolvedor where cd_desenvolvedor = vCod;
+
+        delete from desenvolvedor
+        where cd_desenvolvedor = vCod;
+            
+         dbms_output.put_line('Desenvolvedor [' || vNome || '] apagado(a) com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar desenvolvedor, verifique se o [' || LPAD(vCod, 05, '0') || '] informado é válido.');  
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar desenvolvedor de código: [' || LPAD(vCod, 05, '0') || ']' );
+ 
+ END sp_delete_desenvolvedor;
+
+
+END; -- FIm Package desenvolvedor
+
+
+

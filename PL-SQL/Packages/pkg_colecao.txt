@@ -1,0 +1,231 @@
+CREATE OR REPLACE PACKAGE pkg_colecao
+IS
+
+    PROCEDURE sp_insert_colecao(vKey chaves.cd_key%type, vCliente cliente.cd_cliente%type, vProduto produto.cd_produto%type);
+    PROCEDURE sp_update_colecao(vKey chaves.cd_key%type, vCliente cliente.cd_cliente%type, vProduto produto.cd_produto%type);
+    PROCEDURE sp_delete_colecao(vCliente cliente.cd_cliente%type);
+
+END; -- Fim Package Colecao
+
+
+/
+
+
+CREATE OR REPLACE PACKAGE BODY pkg_colecao --Corpo
+IS
+PROCEDURE sp_insert_colecao(
+ vKey chaves.cd_key%type
+ ,vCliente cliente.cd_cliente%type
+ ,vProduto produto.cd_produto%type
+
+ )   IS 
+ 
+ -- EXCEPTIONS
+erpro EXCEPTION;
+erxiste EXCEPTION; 
+eFk_Erro EXCEPTION;
+er_Fatal EXCEPTION;
+erInat EXCEPTION;
+
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+-- Nomes
+vApelido cliente.nome_ex_cliente%type;
+vNome_Pro produto.nome_produto%type;
+vSit varchar(42) := check_colecao(vKey, vCliente, vProduto) ;
+
+
+ BEGIN
+     
+    SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+    SELECT nome_produto into vNome_Pro from produto where cd_produto = vProduto;   
+    
+    IF(check_colecao(vKey, vCliente, vProduto) = 'ok')   THEN  
+    
+     INSERT INTO Colecao
+     (cd_key, cd_cliente, cd_produto, dt_add_colecao)
+     VALUES
+     (vKey, vCliente, vProduto, SYSDATE);
+        
+     dbms_output.put_line('Produto [' || vNome_Pro || '] Adicionado a coleção de ' || vApelido);
+     COMMIT;
+     
+    
+    ELSIF(vSit = 'Produto já existe na coleção') THEN RAISE erpro;
+    
+    ELSIF(vSit = 'já cadastrada!') THEN RAISE erxiste;
+    
+    ELSIF(vSit = 'Produto/Chave incorretos')  THEN RAISE er_Fatal;
+    
+    ELSIF(vSit = 'Chave ou Produto inativo') THEN RAISE erInat;
+     
+    END IF;
+         
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+                 RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+       WHEN eFk_erro THEN
+       
+           RAISE_APPLICATION_ERROR(-20002,'Valores não encontrados, verique se '
+             || chr(10) || ' - Produto'
+             || chr(10) || ' - Chave'
+             || chr(10) || ' - Cliente'                
+             || chr(10) || ' - Realmente existem no bando de dados.');
+       
+        WHEN no_data_found THEN 
+        
+             RAISE_APPLICATION_ERROR(-20001,'Valores não encontrados, verique se '
+             || chr(10) || ' - Produto'
+             || chr(10) || ' - Chave'
+             || chr(10) || ' - Cliente'                
+             || chr(10) || ' - Realmente existem no bando de dados.');    
+        
+        WHEN erxiste THEN
+    
+            RAISE_APPLICATION_ERROR(-20202, 'ERRO: Chave de [' || vNome_pro || ']' || ' ' ||vSit);
+        
+        WHEN erpro THEN
+    
+            RAISE_APPLICATION_ERROR(-20204, 'ERRO: Produto [' || vNome_pro || ']' || ' ' || vSit || ' de ' ||  vApelido);
+        
+       WHEN er_Fatal THEN
+        
+           RAISE_APPLICATION_ERROR(-20205, 'ERRO: ' || vSit);
+           
+       WHEN erInat THEN
+    
+          RAISE_APPLICATION_ERROR(-20206, 'ERRO: ' || vSit);
+          
+        WHEN OTHERS THEN
+            
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar adicionar item [' || vNome_pro || ']' || ' a coleção de ' || vApelido);
+                  
+ END sp_insert_colecao;
+ 
+PROCEDURE sp_update_colecao(
+ vKey chaves.cd_key%type
+ ,vCliente cliente.cd_cliente%type
+ ,vProduto produto.cd_produto%type
+
+ )   IS 
+ 
+ -- EXCEPTIONS
+erpro EXCEPTION;
+erxiste EXCEPTION; 
+eFk_Erro EXCEPTION;
+er_Fatal EXCEPTION;
+erInat EXCEPTION;
+
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+-- Nomes
+vApelido cliente.nome_ex_cliente%type;
+vNome_Pro produto.nome_produto%type;
+vSit varchar(42) := check_colecao(vKey, vCliente, vProduto) ;
+
+
+ BEGIN
+     
+    SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+    SELECT nome_produto into vNome_Pro from produto where cd_produto = vProduto;   
+    
+    IF(check_colecao(vKey, vCliente, vProduto) = 'ok')   THEN  
+    
+     UPDATE colecao 
+     set cd_key = vKey
+     ,cd_produto = vProduto
+     ,dt_add_colecao = SYSDATE
+     WHERE cd_cliente = vCliente;
+        
+     dbms_output.put_line('Coleção de [' || vApelido  || '] atualizada.');
+     COMMIT;
+     
+    ELSIF(vSit = 'Produto já existe na coleção') THEN RAISE erpro;
+    
+    ELSIF(vSit = 'já cadastrada!') THEN RAISE erxiste;
+    
+    ELSIF(vSit = 'Produto/Chave incorretos')  THEN RAISE er_Fatal;
+    
+    ELSIF(vSit = 'Chave ou Produto inativo') THEN RAISE erInat;
+     
+    END IF;
+         
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+                 RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+       WHEN eFk_erro THEN
+       
+           RAISE_APPLICATION_ERROR(-20002,'Valores não encontrados, verique se '
+             || chr(10) || ' - Produto'
+             || chr(10) || ' - Chave'
+             || chr(10) || ' - Cliente'                
+             || chr(10) || ' - Realmente existem no bando de dados.');
+       
+        WHEN no_data_found THEN 
+        
+             RAISE_APPLICATION_ERROR(-20001,'Valores não encontrados, verique se '
+             || chr(10) || ' - Produto'
+             || chr(10) || ' - Chave'
+             || chr(10) || ' - Cliente'                
+             || chr(10) || ' - Realmente existem no bando de dados.');    
+        
+        WHEN erxiste THEN
+    
+            RAISE_APPLICATION_ERROR(-20202, 'ERRO: Chave de [' || vNome_pro || ']' || ' ' ||vSit);
+        
+        WHEN erpro THEN
+    
+            RAISE_APPLICATION_ERROR(-20204, 'ERRO: Produto [' || vNome_pro || ']' || ' ' || vSit || ' de ' ||  vApelido);
+        
+       WHEN er_Fatal THEN
+        
+           RAISE_APPLICATION_ERROR(-20205, 'ERRO: ' || vSit);
+           
+       WHEN erInat THEN
+    
+          RAISE_APPLICATION_ERROR(-20206, 'ERRO: ' || vSit);
+          
+        WHEN OTHERS THEN
+            
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar item [' || vNome_pro || ']' || ' a coleção de ' || vApelido);
+                  
+ END sp_update_colecao;
+ 
+PROCEDURE sp_delete_colecao(
+
+vCliente cliente.cd_cliente%type
+
+ )   IS 
+
+-- Nomes
+vApelido cliente.nome_ex_cliente%type;
+
+ BEGIN
+     
+    SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente; 
+    
+     DELETE FROM Colecao
+     WHERE cd_cliente = vCliente;
+        
+     dbms_output.put_line('Coleção de [' || vApelido  || '] apagada com sucesso!');
+     COMMIT;
+         
+    EXCEPTION            
+       
+        WHEN no_data_found THEN 
+        
+             RAISE_APPLICATION_ERROR(-20001,'Erro ao tentar apagar coleção, verifique se o código  [' || vCliente|| '] é válido.');   
+          
+        WHEN OTHERS THEN
+            
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar coleção de [' || vApelido|| ']');
+                  
+ END sp_delete_colecao;
+
+END; -- FIm Package Body Colecao

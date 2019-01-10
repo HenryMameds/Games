@@ -1,0 +1,122 @@
+CREATE OR REPLACE PACKAGE pkg_form_pag
+IS
+   
+PROCEDURE sp_insert_form_pag( vNome  IN  form_pag.nome%type);
+PROCEDURE sp_update_form_pag(vCod    IN  form_pag.cd_form_pag%type, vNome   IN  form_pag.nome%type);
+PROCEDURE sp_delete_form_pag(vCod form_pag.cd_form_pag%type);
+END; -- Fim Package 
+
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_form_pag --Corpo
+IS
+
+PROCEDURE sp_insert_form_pag(
+ vNome  IN  form_pag.nome%type
+ )  IS vCod form_pag.cd_form_pag%type;erxiste EXCEPTION;
+ BEGIN
+    
+     IF(existe_form_pag(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT faixa_cd_form_pag.nextval INTO vCod FROM dual;
+        
+    INSERT INTO Form_Pag
+    (cd_form_pag, nome, dt_cadastro)
+    VALUES
+    (vCod, UPPER(vNome), SYSDATE);
+        
+    dbms_output.put_line('Forma de pagamento [' || vNome || '] Cadastrada com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Forma de pagamento [' || vNome || ']' || ' Codigo duplicado.');
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Forma de pagamento [' || vNome || ']' || ' Já está cadastrada no sistema.'); 
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Forma de pagamento [' || vNome || ']');
+                  
+ END sp_insert_form_pag;
+
+PROCEDURE sp_update_form_pag(
+vCod    IN  form_pag.cd_form_pag%type
+,vNome   IN  form_pag.nome%type
+ )  IS erxiste EXCEPTION; erCdError EXCEPTION; vCount number(1);
+ BEGIN
+     
+     SELECT COUNT(cd_form_pag) INTO vCount FROM form_pag WHERE cd_form_pag = vCod;
+     
+     IF(vCount > 0) THEN
+         IF(existe_form_pag(vNome) > 0) THEN RAISE erxiste; END IF;
+               
+        UPDATE Form_Pag
+        SET nome = UPPER(vNome)
+        WHERE cd_form_pag = vCod;
+      
+        dbms_output.put_line('Forma de pagamento de código [' || LPAD(vCod, 3, '0') || '] atualizada com sucesso.');
+        COMMIT;
+    
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+    
+    EXCEPTION
+        
+        WHEN no_data_found THEN
+        
+        RAISE_APPLICATION_ERROR(-20201, 'Erro ao tentar atualizar forma de pagamento de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido.');
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Forma de pagamento [' || vNome || ']' || ' Já está cadastrada no sistema.'); 
+         
+         WHEN erCdError Then
+         
+          RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar forma de pagamento de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido.');
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Forma de pagamento [' || vNome || ']');
+                  
+ END sp_update_form_pag;
+ 
+ 
+PROCEDURE sp_delete_form_pag(
+vCod form_pag.cd_form_pag%type
+
+ )   IS 
+vCount number(1);
+vNome form_pag.nome%type;
+
+ BEGIN   
+        
+        SELECT nome into vNome from form_pag where cd_form_pag = vCod;
+
+        delete from form_pag 
+        where cd_form_pag = vCod;
+            
+         dbms_output.put_line('Forma de Pagamento [' || vNome || '] apagada com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar Forma de Pagamento, verifique se o [' || LPAD(vCod, 2, '0') || '] informado é válido.');   
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar Forma de Pagamento de código: [' || LPAD(vCod, 2, '0') || ']' );
+ 
+ END sp_delete_form_pag;
+
+END; -- FIm Package form_pag
+

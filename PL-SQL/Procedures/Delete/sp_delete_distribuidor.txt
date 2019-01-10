@@ -1,0 +1,28 @@
+ CREATE OR REPLACE PROCEDURE sp_delete_distribuidor(
+vCod distribuidor.cd_distribuidor%type
+
+ )   IS 
+vCount number(1);
+vNome distribuidor.nome_distribuidor%type;
+
+ BEGIN
+        
+      SELECT nome_distribuidor into vNome from distribuidor where cd_distribuidor = vCod;
+
+        delete from distribuidor 
+        where cd_distribuidor = vCod;
+            
+         dbms_output.put_line('Distribuidor [' || vNome || '] apagado com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar Distribuidor, verifique se o [' || LPAD(vCod, 5, '0') || '] informado é válido.');         
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar distribuidor de código: [' || LPAD(vCod, 5, '0') || ']' );
+            
+ END sp_delete_distribuidor;

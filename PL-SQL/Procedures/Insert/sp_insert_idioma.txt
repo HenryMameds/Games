@@ -1,0 +1,33 @@
+CREATE OR REPLACE PROCEDURE sp_insert_idioma(
+ vNome  IN  idioma.nome_idioma%type
+ ,vSigla IN idioma.sigla_idioma%type
+ )  IS vCod idioma.cd_idioma%type;erxiste EXCEPTION;
+ BEGIN
+    
+     IF(existe_idioma(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT faixa_cd_idioma.nextval INTO vCod FROM dual;
+        
+    INSERT INTO Idioma
+    (cd_idioma, sigla_idioma, nome_idioma, dt_cadastro_idioma)
+    VALUES
+    (vCod, vSigla, UPPER(vNome), SYSDATE);
+        
+    dbms_output.put_line('Idioma [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Idioma [' || vNome || ']' || ' Codigo duplicado.');
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Idioma [' || vNome || ']' || ' Já está cadastrado no sistema.'); 
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Idioma [' || vNome || ']');
+                  
+ END sp_insert_idioma;

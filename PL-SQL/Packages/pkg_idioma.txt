@@ -1,0 +1,228 @@
+CREATE OR REPLACE PACKAGE pkg_idioma
+IS
+ PROCEDURE sp_insert_idioma(vNome  IN  idioma.nome_idioma%type,vSigla IN idioma.sigla_idioma%type); 
+ PROCEDURE sp_update_idioma(vCod idioma.cd_idioma%type,vNome  IN  idioma.nome_idioma%type,vSigla IN idioma.sigla_idioma%type );
+ PROCEDURE sp_delete_idioma(vCod idioma.cd_idioma%type);
+ 
+ -- Idioma_pro
+ PROCEDURE sp_insert_idioma_pro (vIdioma IN idioma.cd_idioma%type,vProduto IN produto.cd_produto%type);
+ PROCEDURE sp_delete_idioma_pro(vIdioma idioma_pro.cd_idioma%type,vProduto idioma_pro.cd_produto%type);
+ 
+END; -- Fim Package Idioma
+
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_idioma --Corpo
+IS
+
+PROCEDURE sp_insert_idioma(
+ vNome  IN  idioma.nome_idioma%type
+ ,vSigla IN idioma.sigla_idioma%type
+ )  IS vCod idioma.cd_idioma%type;erxiste EXCEPTION;
+ BEGIN
+    
+     IF(existe_idioma(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT faixa_cd_idioma.nextval INTO vCod FROM dual;
+        
+    INSERT INTO Idioma
+    (cd_idioma, sigla_idioma, nome_idioma, dt_cadastro_idioma)
+    VALUES
+    (vCod, vSigla, UPPER(vNome), SYSDATE);
+        
+    dbms_output.put_line('Idioma [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Idioma [' || vNome || ']' || ' Codigo duplicado.');
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Idioma [' || vNome || ']' || ' Já está cadastrado no sistema.'); 
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Idioma [' || vNome || ']');
+                  
+ END sp_insert_idioma;
+
+PROCEDURE sp_update_idioma(
+ vCod idioma.cd_idioma%type
+ ,vNome  IN  idioma.nome_idioma%type
+ ,vSigla IN idioma.sigla_idioma%type
+ )  IS erxiste EXCEPTION; erCdError EXCEPTION; vCount number(1);
+ BEGIN
+    
+    SELECT COUNT(cd_idioma) INTO vCount FROM Idioma WHERE cd_idioma = vCod;
+    
+    IF(vCount > 0) THEN
+     
+         IF(existe_idioma(vNome) > 0) THEN RAISE erxiste; END IF;   
+            
+        UPDATE Idioma
+        SET sigla_idioma = vSigla, nome_idioma = UPPER(vNome)
+        WHERE cd_idioma = vCod;
+              
+        dbms_output.put_line('Idioma de código [' || LPAD(vCod, 3, '0')|| '] atualizado com sucesso.');
+        COMMIT;
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+    
+    
+    EXCEPTION
+        
+       WHEN no_data_found THEN
+       
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar idioma de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido'); 
+         
+           
+       WHEN erCdError THEN
+       
+         RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar idioma de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido'); 
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Idioma [' || vNome || ']' || ' Já está cadastrado no sistema.'); 
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Idioma [' || vNome || ']');
+                  
+ END sp_update_idioma;
+ 
+PROCEDURE sp_delete_idioma(
+ vCod idioma.cd_idioma%type
+ )  IS vNome idioma.nome_idioma%type;
+ BEGIN
+    
+        SELECT  nome_idioma into vNome from idioma where cd_idioma = vCod;   
+        
+        DELETE FROM Idioma
+        WHERE cd_idioma = vCod;
+              
+        dbms_output.put_line('Idioma [' || vNome || '] apagado com sucesso.');
+        COMMIT;
+     
+    EXCEPTION
+        
+       WHEN no_data_found THEN
+       
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar deletar idioma de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido'); 
+                  
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar deletar idioma de codigo  [' ||  LPAD(vCod, 3, '0') || ']');
+                  
+ END sp_delete_idioma;
+ 
+ --- IDIOMA PRO ---
+ 
+ PROCEDURE sp_insert_idioma_pro (
+    vIdioma IN idioma.cd_idioma%type
+    ,vProduto IN produto.cd_produto%type
+) IS 
+ vNomeProduto produto.nome_produto%type;
+ vNomeIdioma idioma.nome_idioma%type;
+ eFk_Erro EXCEPTION;
+ PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+ Begin
+
+        --Idioma
+        SELECT nome_idioma INTO vNomeIdioma from idioma where cd_idioma = vIdioma;
+        --Produto
+        SELECT nome_produto INTO vNomeProduto from produto where cd_produto = vProduto;
+
+    INSERT INTO Idioma_Pro 
+    (cd_idioma, cd_produto)
+    VALUES
+    (vIdioma, vProduto);
+
+    dbms_output.put_line('Idioma [' || vNomeIdioma || '] Cadastrado ao produto [' || vNomeProduto || '] ');
+    COMMIT;
+
+    EXCEPTION
+
+         WHEN eFk_erro THEN
+        
+            RAISE_APPLICATION_ERROR(-20002,'Erro ao cadastrar Idioma [' || vNomeIdioma || '] ao produto [' || vNomeProduto || ']  Verifique se o valor informado em: '   
+            || chr(10) || ' - Idioma '
+            || chr(10) || ' - Produto '
+            || chr(10) || ' Realmente existe no bando de dados.'); 
+        
+        WHEN dup_val_on_index THEN            
+            
+            RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                    
+        WHEN no_data_found THEN 
+        
+            RAISE_APPLICATION_ERROR(-20001,'Valores não encontrados, verique se '
+            || chr(10) || ' - Idioma'
+            || chr(10) || ' - Produto'             
+            || chr(10) || ' - Realmente existem no bando de dados.');    
+
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar idioma [' || vNomeIdioma || ']' || ' ao produto ' || vNomeProduto);
+                  
+ END sp_insert_idioma_pro;
+ 
+ PROCEDURE sp_delete_idioma_pro(
+vIdioma idioma_pro.cd_idioma%type
+,vProduto idioma_pro.cd_produto%type
+)
+    Is vNomeProd produto.nome_produto%type;
+       vNomeIdioma idioma.nome_idioma%type;
+       eFk_Erro EXCEPTION;
+       vCont number(1);
+       
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+    BEGIN
+    
+    SELECT count(cd_idioma) into vCont from idioma_pro where cd_produto = vProduto and cd_idioma = vIdioma;
+    
+    IF(vCont > 0) THEN 
+
+   SELECT nome_produto into vNomeProd from produto where cd_produto = vProduto;
+   SELECT nome_idioma into vNomeIdioma from idioma where cd_idioma = vIdioma;
+    
+    DELETE FROM idioma_pro
+    where cd_idioma = vIdioma and cd_produto = vProduto;
+
+    dbms_output.put_line('idioma [' || vNomeIdioma || '] Apagado com sucesso! Referente ao produto: [' || vNomeProd || ']');
+     COMMIT;
+     
+    ELSE 
+    
+    RAISE eFk_Erro; 
+    
+    END IF; 
+
+    EXCEPTION
+      
+       WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar idioma de código: [' || LPAD(vIdioma, 10, '0')|| ']' || chr(10) || 'Verifique se o código do idioma está correto.'  );
+        
+       WHEN eFk_erro THEN
+     
+        RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+        || chr(10) || ' - Idioma'
+        || chr(10) || ' - Produto'
+        || chr(10) || ' - Realmente existem no bando de dados.'); 
+         
+           
+       WHEN OTHERS THEN
+        
+        RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar o idioma, verifice se o codigo  [' ||  vIdioma || '] é válido' );
+              
+ END sp_delete_idioma_pro;
+ 
+END; -- FIm Package Idioma / idioma_pro

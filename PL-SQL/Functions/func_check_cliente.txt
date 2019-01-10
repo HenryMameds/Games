@@ -1,0 +1,28 @@
+CREATE OR REPLACE FUNCTION check_cliente(
+vLogin cliente.login_cliente%type
+,vEmail cliente.email_cliente%type
+,vNomExibe cliente.nome_ex_cliente%type
+)
+
+RETURN VARCHAR 
+IS 
+vSit varchar(42) := 'ok';
+vContLogin number;
+vContEmail number;
+vContExibe number;
+
+BEGIN
+        
+        SELECT COUNT(login_cliente) INTO vContLogin from cliente where login_cliente = vLogin;
+        SELECT COUNT(email_cliente) INTO vContEmail from cliente where email_cliente = vEmail;
+        SELECT COUNT(nome_ex_cliente) INTO vContExibe from cliente where nome_ex_cliente = vNomExibe;
+
+        IF (vContLogin > 0) THEN vSit := 'Login já cadastrado';
+        ELSIF (vContEmail > 0) THEN vSit := 'Email já cadastrado';
+        ELSIF (vContExibe > 0) THEN vSit := 'Nome já ultilizado';
+        
+        END IF;
+
+        RETURN (vSit);
+
+END;

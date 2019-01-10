@@ -1,0 +1,49 @@
+CREATE OR REPLACE PROCEDURE sp_insert_pedido(
+vCliente cliente.cd_cliente%type
+,vPag pedido.cd_form_pag%type
+ )   IS 
+vCod pedido.cd_pedido%type; 
+vApelido cliente.nome_ex_cliente%type;
+eFk_Erro EXCEPTION;
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+ BEGIN
+     
+        select faixa_cd_pedido.nextval into vCod from dual;
+               
+        
+        SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+        
+         INSERT INTO Pedido
+         (cd_pedido, cd_cliente, dt_pedido,situacao, cd_form_pag )
+         VALUES
+         (vCod, vCliente, SYSDATE, UPPER('Em Aberto'), vPag );
+            
+         dbms_output.put_line('Pedido [' || LPAD(vCod, 10, '0') || '] aberto com sucesso para cliente: ' || vApelido);
+        COMMIT;
+        
+     
+    EXCEPTION
+        
+       WHEN dup_val_on_index THEN            
+            
+               RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+        WHEN no_data_found THEN
+        
+         RAISE_APPLICATION_ERROR(-20001, 'Valores não encontrados, verique se '
+         || chr(10) || ' - Codigo Cliente'
+         || chr(10) || ' - Forma de Pagamento'
+         || chr(10) || ' - Realmente Existem no bando de dados.'); 
+         
+        WHEN eFk_erro THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+                 || chr(10) || ' - Codigo Cliente'
+                 || chr(10) || ' - Forma de Pagamento'
+                 || chr(10) || ' - Realmente Existem no bando de dados.'); 
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar abrir pedido [' || LPAD(vCod, 10, '0') || ']' || ' para ' || vApelido);
+                  
+ END sp_insert_pedido;

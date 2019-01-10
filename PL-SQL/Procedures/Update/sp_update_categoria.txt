@@ -1,0 +1,53 @@
+
+----------------------------------------PROCEDURE----------------------------------------
+CREATE OR REPLACE PROCEDURE sp_update_categoria(
+vCod categoria.cd_categoria%type
+,vNome  IN  categoria.nome_categoria%type
+,vDesc IN categoria.desc_categoria%type
+ )  IS 
+ erCdError EXCEPTION;
+ erxiste EXCEPTION;
+ vCount number(1);
+ BEGIN
+    
+   
+    
+    SELECT COUNT(cd_plataforma) into vCount from plataforma WHERE cd_plataforma = vCOd;
+    
+     IF(existe_categoria(vNome) > 0) THEN RAISE erxiste; END IF;
+     
+    IF(vCount > 0) THEN 
+    
+    UPDATE Categoria
+    SET nome_categoria = UPPER(vNome)
+    ,desc_categoria = vDesc
+    WHERE cd_categoria = vCod;
+       
+    dbms_output.put_line('Categoria de código [' || LPAD(vCod, 3, '0') || '] atualizada com sucesso.');
+    COMMIT; 
+    
+    ELSE 
+    
+    RAISE erCdError; 
+    
+    END IF;
+    
+    EXCEPTION
+        
+       WHEN no_data_found THEN           
+            
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar categoria, verifique se o código [' || LPAD(vCod, 3, '0') || ']' || ' está correto. ');
+         
+        WHEN erCdError THEN
+        
+        RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar categoria, verifique se o código [' ||  LPAD(vCod, 3, '0')|| ']' || ' está correto. ');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Categoria [' || vNome || ']' || ' já está cadastrada no sistema.'); 
+                  
+        WHEN OTHERS THEN
+            
+          RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Categoria [' || vNome || ']');
+                  
+ END sp_update_categoria;

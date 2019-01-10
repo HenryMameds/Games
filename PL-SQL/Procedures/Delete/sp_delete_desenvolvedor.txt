@@ -1,0 +1,28 @@
+CREATE OR REPLACE PROCEDURE sp_delete_desenvolvedor(
+vCod desenvolvedor.cd_desenvolvedor%type
+
+ )   IS 
+vCount number(1);
+vNome desenvolvedor.nome_desenvolvedor%type;
+
+ BEGIN   
+        
+        SELECT nome_desenvolvedor into vNome from desenvolvedor where cd_desenvolvedor = vCod;
+
+        delete from desenvolvedor
+        where cd_desenvolvedor = vCod;
+            
+         dbms_output.put_line('Desenvolvedor [' || vNome || '] apagado(a) com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar desenvolvedor, verifique se o [' || LPAD(vCod, 05, '0') || '] informado é válido.');  
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar desenvolvedor de código: [' || LPAD(vCod, 05, '0') || ']' );
+ 
+ END sp_delete_desenvolvedor;

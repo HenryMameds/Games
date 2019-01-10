@@ -1,0 +1,13 @@
+CREATE OR REPLACE FUNCTION existe_desenvolvedor(
+vNome desenvolvedor.nome_desenvolvedor%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+    
+    SELECT count(nome_desenvolvedor) into vCont from desenvolvedor where nome_desenvolvedor = vNome;
+    
+    RETURN (vCont);
+
+    
+END;

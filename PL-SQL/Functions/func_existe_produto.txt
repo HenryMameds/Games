@@ -1,0 +1,11 @@
+CREATE OR REPLACE FUNCTION existe_produto(
+vNome produto.nome_produto%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+    
+    SELECT count(nome_produto) into vCont from produto where nome_produto = vNome;
+    
+    RETURN (vCont); 
+END;

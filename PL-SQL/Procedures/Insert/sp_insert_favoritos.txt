@@ -1,0 +1,86 @@
+--FAVORITOS
+
+ ----------------------------------------FUNCTION----------------------------------------
+
+CREATE OR REPLACE FUNCTION check_favoritos(
+vCliente cliente.cd_cliente%type
+,vProduto produto.cd_produto%type
+)
+
+RETURN VARCHAR
+IS
+vSit varchar(42) := 'ok';
+vCont number;
+
+BEGIN
+
+        SELECT COUNT(cd_produto) INTO vCont from favoritos where cd_cliente = vCliente and cd_produto = vProduto;
+
+        IF (vCont > 0) THEN vSit := 'Produto já existe na coleção';
+
+        END IF;
+
+        RETURN (vSit);  
+END;
+
+----------------------------------------PROCEDURE----------------------------------------
+
+CREATE OR REPLACE PROCEDURE sp_insert_favoritos (
+vCliente IN cliente.cd_cliente%type
+,vProduto IN produto.cd_produto%type
+) IS 
+    vApelido cliente.nome_cliente%type;
+    vNome_Pro produto.nome_produto%type;
+    eFk_Erro EXCEPTION;
+    erpro EXCEPTION;
+    PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+    vSit varchar(42) := check_favoritos(vProduto, vCliente);
+
+    BEGIN
+      
+    SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+    SELECT nome_produto into vNome_Pro from produto where cd_produto = vProduto;
+       
+    IF(check_favoritos(vProduto, vCliente) = 'ok')   THEN  
+    
+     INSERT INTO Favoritos
+     (cd_cliente, cd_produto, dt_add_favorito)
+     VALUES
+     (vCliente, vProduto, SYSDATE);
+        
+     dbms_output.put_line('Produto [' || vNome_Pro || '] Adicionado a lista de favoritos de ' || vApelido);
+     COMMIT;
+     
+    
+    ELSIF(vSit = 'Produto já existe na coleção') THEN RAISE erpro;
+    END IF;
+         
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+                 RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+       WHEN eFk_erro THEN
+       
+           RAISE_APPLICATION_ERROR(-20002,'Valores não encontrados, verique se '
+             || chr(10) || ' - Cliente'
+             || chr(10) || ' - Produto'                
+             || chr(10) || ' - Realmente existem no bando de dados.');
+       
+        WHEN no_data_found THEN 
+        
+             RAISE_APPLICATION_ERROR(-20001,'Valores não encontrados, verique se '
+             || chr(10) || ' - Cliente'
+             || chr(10) || ' - Produto'                
+             || chr(10) || ' - Realmente existem no bando de dados.');    
+        
+        WHEN erpro THEN
+    
+            RAISE_APPLICATION_ERROR(-20204, 'ERRO: Produto [' || vNome_Pro || ']' || ' ' || vSit || ' de ' ||  vApelido);
+          
+        WHEN OTHERS THEN
+            
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar item [' || vNome_Pro || ']' || ' a lista de favoritos de ' || vApelido);
+                  
+ END sp_insert_favoritos;

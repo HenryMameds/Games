@@ -1,0 +1,28 @@
+CREATE OR REPLACE PROCEDURE sp_delete_chaves(
+vCod chaves.cd_key%type
+
+
+ )  IS vNum  chaves.num_key%type;
+  
+
+ BEGIN
+ 
+    SELECT num_key into vNum from chaves where cd_key = vCod;
+    DELETE FROM chaves
+    Where cd_key = vCod;
+    
+    dbms_output.put_line('Chave [' || vNum || '] Apagada com sucesso!');
+    COMMIT;
+
+    EXCEPTION
+      
+       WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar chave de código: [' || LPAD(vCod, 10, '0')|| ']' || chr(10) || 'Verifique se o código da chave está correto.'  );
+         
+           
+        WHEN OTHERS THEN
+        
+              RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar a chave, verifice se o codigo  [' ||  vCod || '] é válido' );
+              
+ END sp_delete_chaves;

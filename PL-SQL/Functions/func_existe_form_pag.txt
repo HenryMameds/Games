@@ -1,0 +1,12 @@
+CREATE OR REPLACE FUNCTION existe_form_pag (
+vNome form_pag.nome%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+
+    SELECT count(nome) into vCont from form_pag where nome = vNome;
+
+    RETURN (vCont);
+
+END; 

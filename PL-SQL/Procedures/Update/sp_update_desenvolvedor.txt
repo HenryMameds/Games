@@ -1,0 +1,45 @@
+CREATE OR REPLACE PROCEDURE sp_update_desenvolvedor(
+ vCod desenvolvedor.cd_desenvolvedor%type
+ ,vNome  IN  desenvolvedor.nome_desenvolvedor%type
+ ,vSite IN desenvolvedor.site_desenvolvedor%type
+ )  IS erCdError EXCEPTION; erxiste EXCEPTION; vCount number(1);
+ BEGIN
+    
+    SELECT COUNT(cd_desenvolvedor) INTO vCount FROM desenvolvedor WHERE cd_desenvolvedor = vCod;
+    
+    IF(vCount > 0) THEN
+    
+        IF(existe_desenvolvedor(vNome) > 0) THEN RAISE erxiste; END IF;
+                
+        UPDATE Desenvolvedor
+        SET nome_desenvolvedor = UPPER(vNome)
+        ,site_desenvolvedor = vSite
+        WHERE cd_desenvolvedor = vCod;
+            
+        dbms_output.put_line('Desenvolvedor de código [' || LPAD(vCod, 5, '0') || '] Atualizado com sucesso!');
+        COMMIT;
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+    
+    EXCEPTION
+    
+        WHEN no_data_found THEN
+        
+         RAISE_APPLICATION_ERROR(-20201, 'Erro tentar atualizar desenvolvedor de código [' || LPAD(vCod, 5, '0') || ']' || ' verifique se o código informado é válido.');
+    
+       WHEN erCdError THEN
+        
+         RAISE_APPLICATION_ERROR(-20209, 'Erro tentar atualizar desenvolvedor de código [' || LPAD(vCod, 5, '0') || ']' || ' verifique se o código informado é válido.');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Desenvolvedor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Desenvolvedor [' || vNome || ']');
+                  
+ END sp_update_desenvolvedor;

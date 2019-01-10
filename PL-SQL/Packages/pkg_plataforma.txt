@@ -1,0 +1,112 @@
+CREATE OR REPLACE PACKAGE pkg_plataforma
+IS
+    PROCEDURE sp_insert_plataforma(vNome  IN  plataforma.nome_plataforma%type);
+    PROCEDURE sp_update_plataforma(vCod   IN plataforma.cd_plataforma%type ,vNome  IN  plataforma.nome_plataforma%type);                       
+    PROCEDURE sp_delete_plataforma(vCod   IN plataforma.cd_plataforma%type);
+
+END; -- Fim Package Plataforma
+/
+CREATE OR REPLACE PACKAGE BODY pkg_plataforma --Corpo
+IS
+
+PROCEDURE sp_insert_plataforma(
+ vNome  IN  plataforma.nome_plataforma%type
+ 
+ )  IS vCod plataforma.cd_plataforma%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_plataforma(vNome) > 0) THEN RAISE erxiste; END IF;
+       
+    SELECT faixa_cd_plataforma.nextval INTO vCod FROM dual;
+    
+    INSERT INTO Plataforma
+    (cd_plataforma, nome_plataforma, dt_cadastro)
+    VALUES
+    (vCod, UPPER(vNome), SYSDATE);
+    
+    dbms_output.put_line('Plataforma [' || vNome || '] Cadastrada com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+                
+        WHEN dup_val_on_index THEN            
+        
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar `Plataforma [' || vNome || ']' || ' Codigo duplicado.');
+              
+	WHEN erxiste THEN
+    
+         RAISE_APPLICATION_ERROR(-20202, 'ERRO: Plataforma[' || vNome || ']' || ' Já está cadastrada no sistema.');
+              
+        WHEN OTHERS THEN
+        
+             RAISE_APPLICATION_ERROR(-20003,'Erro desconhecido ao tentar cadastrar Plataforma [' || vNome || ']');
+                  
+ END sp_insert_plataforma;
+
+PROCEDURE sp_update_plataforma(
+ vCod   IN plataforma.cd_plataforma%type
+ ,vNome  IN  plataforma.nome_plataforma%type
+ 
+ ) IS erxiste EXCEPTION; vOld_nome plataforma.nome_plataforma%type; 
+ BEGIN
+    
+    IF(existe_plataforma(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT nome_plataforma into vOld_nome from plataforma where cd_plataforma = vCod;
+    
+    UPDATE Plataforma
+    SET nome_plataforma = UPPER(vNome)
+    WHERE
+    (cd_plataforma = vCod);
+    
+    dbms_output.put_line('Plataforma [' || vOld_nome || '] atualizada para [' || vNome || ']');
+    
+    COMMIT;
+    
+    EXCEPTION
+    
+        WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar plataforma [' || vNome || ']' || chr(10) || 'Verifique se o valor informado em: '  
+        || chr(10) || ' - cd_plataforma'
+        || chr(10) || ' Realmente existe no bando de dados.');        
+              
+        WHEN erxiste THEN
+    
+         RAISE_APPLICATION_ERROR(-20202, 'ERRO: Plataforma[' || vNome || ']' || ' Já está cadastrada no sistema.');
+              
+        WHEN OTHERS THEN
+        
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Plataforma para [' || vNome || ']');
+                  
+ END sp_update_plataforma;
+ 
+PROCEDURE sp_delete_plataforma(
+ vCod   IN plataforma.cd_plataforma%type
+ 
+ ) IS erxiste EXCEPTION; vNome plataforma.nome_plataforma%type; 
+ BEGIN
+    
+    SELECT nome_plataforma into vNome from plataforma where cd_plataforma = vCod;
+    
+    DELETE Plataforma
+    WHERE
+    (cd_plataforma = vCod);
+    
+    dbms_output.put_line('Plataforma [' || vNome || '] apagada com sucesso!');
+    
+    COMMIT;
+    
+    EXCEPTION
+    
+        WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar deletar plataforma código: [' || LPAD(vCod, 3, '0')|| '] Verifique se o valor o código informado é válido.');         
+              
+        WHEN OTHERS THEN
+        
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar deletar Plataforma para [' || vNome || ']');
+                  
+ END sp_delete_plataforma;
+
+END; -- FIm Package Body Plataforma

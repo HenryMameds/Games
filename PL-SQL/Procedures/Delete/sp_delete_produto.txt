@@ -1,0 +1,28 @@
+
+CREATE OR REPLACE PROCEDURE sp_delete_produto(
+vCod produto.cd_produto%type
+
+ )  IS vNome  produto.nome_produto%type;
+    
+ BEGIN
+    
+          
+    SELECT nome_produto into vNome from produto where cd_produto = vCod;
+    
+    DELETE FROM Produto
+     
+    WHERE cd_produto = vCod;
+    
+    dbms_output.put_line('Produto [' || vNome || '] apagado com sucesso.');
+    COMMIT;      
+     
+    EXCEPTION
+   
+    WHEN no_data_found THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao deletar Produto, verifique se o código [' || vCod || ']' || chr(10) || 'informado é válido. ');  
+       
+    WHEN OTHERS THEN
+    
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar Produto [' || vNome || ']');
+
+ END sp_delete_produto;

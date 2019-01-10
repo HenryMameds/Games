@@ -1,0 +1,25 @@
+CREATE OR REPLACE PROCEDURE sp_delete_idioma(
+ vCod idioma.cd_idioma%type
+ )  IS vNome idioma.nome_idioma%type;
+ BEGIN
+    
+        SELECT  nome_idioma into vNome from idioma where cd_idioma = vCod;   
+        
+        DELETE FROM Idioma
+        WHERE cd_idioma = vCod;
+              
+        dbms_output.put_line('Idioma [' || vNome || '] apagado com sucesso.');
+        COMMIT;
+     
+    EXCEPTION
+        
+       WHEN no_data_found THEN
+       
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar deletar idioma de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido'); 
+                  
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar deletar idioma de codigo  [' ||  LPAD(vCod, 3, '0') || ']');
+                  
+ END sp_delete_idioma;

@@ -1,0 +1,49 @@
+ 
+ 
+
+CREATE OR REPLACE PROCEDURE sp_update_idioma(
+ vCod idioma.cd_idioma%type
+ ,vNome  IN  idioma.nome_idioma%type
+ ,vSigla IN idioma.sigla_idioma%type
+ )  IS erxiste EXCEPTION; erCdError EXCEPTION; vCount number(1);
+ BEGIN
+    
+    SELECT COUNT(cd_idioma) INTO vCount FROM Idioma WHERE cd_idioma = vCod;
+    
+    IF(vCount > 0) THEN
+     
+         IF(existe_idioma(vNome) > 0) THEN RAISE erxiste; END IF;   
+            
+        UPDATE Idioma
+        SET sigla_idioma = vSigla, nome_idioma = UPPER(vNome)
+        WHERE cd_idioma = vCod;
+              
+        dbms_output.put_line('Idioma de código [' || LPAD(vCod, 3, '0')|| '] atualizado com sucesso.');
+        COMMIT;
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+    
+    
+    EXCEPTION
+        
+       WHEN no_data_found THEN
+       
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar idioma de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido'); 
+         
+           
+       WHEN erCdError THEN
+       
+         RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar idioma de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido'); 
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Idioma [' || vNome || ']' || ' Já está cadastrado no sistema.'); 
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Idioma [' || vNome || ']');
+                  
+ END sp_update_idioma;

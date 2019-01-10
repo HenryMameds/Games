@@ -1,0 +1,40 @@
+CREATE OR REPLACE PROCEDURE sp_delete_pedido(
+vCod pedido.cd_pedido%type
+
+ )   IS 
+ 
+erCdError EXCEPTION;
+vCount number(1);
+
+ BEGIN   
+        
+        select count(cd_pedido) into vCount from pedido where cd_pedido = vCod;
+        
+        IF(vCount > 0) THEN
+        
+            delete from pedido 
+            where cd_pedido = vCod;
+                
+             dbms_output.put_line('Pedido [' || LPAD(vCod, 10, '0') || '] apagado com sucesso! ');
+            COMMIT;
+            
+        ELSE
+        
+            RAISE erCdError;
+            
+        END IF;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar Pedido, verifique se o [' || LPAD(vCod, 10, '0') || '] informado é válido.');    
+        
+          WHEN erCdError THEN
+        
+             RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar apagar Pedido, verifique se o [' || LPAD(vCod, 10, '0') || '] informado é válido.'); 
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar pedido de código: [' || LPAD(vCod, 10, '0') || ']' );
+ END sp_delete_pedido;

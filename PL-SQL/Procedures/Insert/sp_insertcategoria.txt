@@ -1,0 +1,33 @@
+CREATE OR REPLACE PROCEDURE sp_insert_categoria(
+ vNome  IN  categoria.nome_categoria%type
+ ,vDesc IN categoria.desc_categoria%type
+ )  IS vCod categoria.cd_categoria%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_categoria(vNome) > 0) THEN RAISE erxiste; END IF;
+
+    SELECT faixa_cd_categoria.nextval INTO vCod FROM dual;
+        
+    INSERT INTO Categoria
+    (cd_categoria, nome_categoria, desc_categoria, data_cadastro_categoria)
+    VALUES
+    (vCod, UPPER(vNome), vDesc, SYSDATE);
+       
+    dbms_output.put_line('Categoria [' || vNome || '] Cadastrada com sucesso.');
+    COMMIT; 
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Categoria [' || vNome || ']' || ' Codigo duplicado.');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Categoria [' || vNome || ']' || ' Já está cadastrada no sistema.'); 
+                  
+        WHEN OTHERS THEN
+            
+          RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Categoria [' || vNome || ']');
+                  
+ END sp_insert_categoria;

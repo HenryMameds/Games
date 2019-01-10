@@ -1,0 +1,51 @@
+CREATE OR REPLACE PROCEDURE sp_insert_chaves(
+vProduto IN chaves.cd_produto%type
+,vNum  IN  chaves.num_key%type
+,vAtv IN chaves.atv_key%type
+
+ )  IS 
+  vCod chaves.cd_key%type;
+  eFk_Erro EXCEPTION;
+  erxiste EXCEPTION;
+  PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+ BEGIN
+ 
+    SELECT faixa_cd_key.nextval INTO vCod FROM dual;
+            
+    IF(existe_chave(vNum) > 0) THEN RAISE erxiste; END IF;
+                
+    INSERT INTO chaves
+    (cd_key, cd_produto, dt_add_key, num_key, atv_key)
+    VALUES
+    (vCod, vProduto, sysdate, UPPER(vNum), vAtv) ;
+    
+    dbms_output.put_line('Chave [' || vNum || '] Cadastrada com sucesso.');
+    COMMIT;
+
+    EXCEPTION
+       WHEN eFk_erro THEN
+        
+             RAISE_APPLICATION_ERROR(-20002,'Erro ao cadastrar Chave [' || vNum || ']' || chr(10) || 'Verifique se o valor informado em: '  
+             || chr(10) || ' - Produto '
+             || chr(10) || ' Realmente existe no bando de dados.'); 
+             
+       
+       WHEN no_data_found THEN
+       
+       RAISE_APPLICATION_ERROR(-20001, 'Erro ao cadastrar Chave [' || vNum || ']' || chr(10) || 'Verifique se o valor informado em: '  
+             || chr(10) || ' - Produto '
+             || chr(10) || ' Realmente existe no bando de dados.'); 
+        
+        WHEN erxiste THEN
+    
+         RAISE_APPLICATION_ERROR(-20202, 'ERRO: Chave[' || vnum || ']' || ' Já está cadastrada no sistema.');
+       
+       WHEN dup_val_on_index THEN            
+        
+           RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar `Chave [' || vNum || ']' || ' Codigo duplicado.');
+              
+        WHEN OTHERS THEN
+        
+              RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Chave [' || vNum || ']');
+              
+ END sp_insert_chaves;

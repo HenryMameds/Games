@@ -1,0 +1,33 @@
+CREATE OR REPLACE PROCEDURE sp_insert_distribuidor(
+ vNome  IN  distribuidor.nome_distribuidor%type
+ ,vSite IN distribuidor.site_distribuidor%type
+ )  IS vCod distribuidor.cd_distribuidor%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_distribuidor(vNome) > 0) THEN RAISE erxiste; END IF;
+    
+    SELECT faixa_cd_distribuidor.nextval INTO vCod FROM dual;  
+    
+    INSERT INTO Distribuidor
+    (cd_distribuidor, nome_distribuidor, site_distribuidor, dt_cadastro_distribuidor)
+    VALUES
+    (vCod, UPPER(vNome), vSite, SYSDATE);
+        
+    dbms_output.put_line('Distribuidor [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+    
+        EXCEPTION
+        
+            WHEN dup_val_on_index THEN            
+            
+             RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Distribuidor [' || vNome || ']' || ' Codigo duplicado.');
+
+            WHEN erxiste THEN
+            
+             RAISE_APPLICATION_ERROR(-20202, 'EROO: Distribuidor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+            WHEN OTHERS THEN
+            
+             RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Distribuidor [' || vNome || ']');
+                  
+ END sp_insert_distribuidor;

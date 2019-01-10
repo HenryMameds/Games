@@ -1,0 +1,50 @@
+CREATE OR REPLACE PROCEDURE sp_delete_sub_cat(
+vProduto produto.cd_produto%type
+,vCategoria categoria.cd_categoria%type
+)
+    Is vNomeProd produto.nome_produto%type;
+       vNomeCat categoria.nome_categoria%type;
+       eFk_Erro EXCEPTION;
+       vCont number(1);
+       
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+    BEGIN
+    
+    SELECT count(cd_categoria) into vCont from sub_cat where cd_produto = vProduto and cd_categoria = vCategoria;
+    
+    IF(vCont > 0) THEN 
+
+   SELECT nome_produto into vNomeProd from produto where cd_produto = vProduto;
+   SELECT nome_categoria into vNomeCat from categoria where cd_categoria = vCategoria;
+    
+    DELETE FROM sub_cat
+    where cd_categoria = vCategoria and cd_produto = vProduto;
+
+    dbms_output.put_line('Categoria [' || vNomeCat || '] Apagado com sucesso! Referente ao produto: [' || vNomeProd || ']');
+     COMMIT;
+     
+    ELSE 
+    
+    RAISE eFk_Erro; 
+    
+    END IF; 
+
+    EXCEPTION
+      
+       WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar categoria de código: [' || LPAD(vCategoria, 10, '0')|| ']' || chr(10) || 'Verifique se o código da categoria está correto.'  );
+        
+       WHEN eFk_erro THEN
+     
+        RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+        || chr(10) || ' - Categoria'
+        || chr(10) || ' - Produto'
+        || chr(10) || ' - Realmente existem no bando de dados.'); 
+         
+           
+       WHEN OTHERS THEN
+        
+        RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar a categoria, verifice se o codigo  [' ||  vCategoria || '] é válido' );
+              
+ END sp_delete_sub_cat;

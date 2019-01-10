@@ -1,0 +1,33 @@
+CREATE OR REPLACE PROCEDURE sp_insert_desenvolvedor(
+ vNome  IN  desenvolvedor.nome_desenvolvedor%type
+ ,vSite IN desenvolvedor.site_desenvolvedor%type
+ )  IS vCod desenvolvedor.cd_desenvolvedor%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_desenvolvedor(vNome) > 0) THEN RAISE erxiste; END IF;
+
+    SELECT faixa_cd_desenvolvedor.nextval INTO vCod FROM dual;      
+        
+    INSERT INTO Desenvolvedor
+    (cd_desenvolvedor, nome_desenvolvedor, site_desenvolvedor, dt_cadastro_desenvolvedor)
+    VALUES
+    (vCod, UPPER(vNome), vSite, SYSDATE);
+        
+    dbms_output.put_line('Desenvolvedor [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Desenvolvedor [' || vNome || ']' || ' Codigo duplicado.');
+
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Desenvolvedor [' || vNome || ']' || ' Já está cadastrado no sistema.');
+                  
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Desenvolvedor [' || vNome || ']');
+                  
+ END sp_insert_desenvolvedor;

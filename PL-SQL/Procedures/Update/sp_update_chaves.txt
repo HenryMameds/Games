@@ -1,0 +1,54 @@
+CREATE OR REPLACE PROCEDURE sp_update_chaves(
+vCod chaves.cd_key%type
+,vNum  IN  chaves.num_key%type
+,vAtv IN chaves.atv_key%type
+
+ )  IS 
+  
+  erxiste EXCEPTION;
+  erCdError EXCEPTION;
+
+  vCount number(1);  
+ BEGIN
+    
+    SELECT COUNT(cd_key) into vCount from chaves where cd_key = vCod;
+    
+    IF(vCount > 0 ) THEN
+    
+        IF(existe_chave(vNum) > 0) THEN RAISE erxiste; END IF;
+        
+        UPDATE chaves
+        SET num_key = UPPER(vNum)
+        ,atv_key = vAtv
+        Where cd_key = vCod;
+        
+        dbms_output.put_line('Chave de Código [' || LPAD(vCod, 10, '0')|| '] Atualizada!');
+        COMMIT;
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+
+    EXCEPTION
+      
+        WHEN no_data_found THEN
+           
+            RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar Chave de código: [' || LPAD(vCod, 10, '0')|| ']' || chr(10) || 'Verifique se o código da chave está correto.'  );
+            
+        WHEN erCdError THEN
+          
+          
+          RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar Chave de código: [' || LPAD(vCod, 10, '0')|| ']' || chr(10) || 'Verifique se o código da chave está correto.'  );
+          
+            
+        WHEN erxiste THEN
+    
+         RAISE_APPLICATION_ERROR(-20202, 'ERRO: Chave[' || vnum || ']' || ' Já está cadastrada no sistema.');
+       
+              
+        WHEN OTHERS THEN
+        
+              RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Chave [' || vNum || ']');
+              
+ END sp_update_chaves;

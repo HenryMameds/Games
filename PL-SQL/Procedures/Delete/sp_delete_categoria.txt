@@ -1,0 +1,32 @@
+
+CREATE OR REPLACE PROCEDURE sp_delete_categoria(
+vCod categoria.cd_categoria%type
+ )  IS 
+ vNome categoria.nome_categoria%type;
+ 
+ BEGIN
+    
+    SELECT nome_categoria into vNome from categoria where cd_categoria = vCod;
+     
+
+    
+        DELETE FROm Categoria
+        WHERE cd_categoria = vCod;
+           
+        dbms_output.put_line('Categoria [' || vNome || '] apagada com sucesso.');
+        COMMIT; 
+    
+
+    
+    EXCEPTION
+        
+       WHEN no_data_found THEN           
+            
+         RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar categoria, verifique se o código [' || LPAD(vCod, 3, '0') || ']' || ' está correto. ');
+ 
+                  
+        WHEN OTHERS THEN
+            
+          RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar Categoria [' || vNome || ']');
+                  
+ END sp_delete_categoria;

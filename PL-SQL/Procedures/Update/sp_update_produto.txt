@@ -1,0 +1,87 @@
+
+CREATE OR REPLACE PROCEDURE sp_update_produto(
+vCod produto.cd_produto%type
+,vNome     IN  produto.nome_produto%type
+,vDesc     IN  produto.desc_produto%type 
+,vImagem   IN  produto.imagem_produto%type default null
+,vPro      IN  produto.vl_produto%type  default null
+,vClas     IN  produto.clas_indic_produto%type default null
+,vAtv      IN  produto.atv_produto%type default null
+,vDlc      IN  produto.dlc_produto%type  default null
+,vBase     IN  produto.base_produto%type  default null
+,vDt       IN  produto.dt_lanc_produto%type 
+,vPlat     IN  produto.cd_plataforma%type default null
+,vDist     IN  produto.cd_distribuidor%type default null
+,vDesv     IN  produto.cd_desenvolvedor%type default null
+
+ )  IS 
+    eFk_Erro EXCEPTION;
+    evalor EXCEPTION;
+    erxiste EXCEPTION;
+    PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+    erCdError EXCEPTION;
+    vCount number(1);
+ BEGIN
+    
+    SELECT COUNT(cd_produto) INTO vCount FROM produto where cd_produto = vCod;
+    
+    IF(vCount > 0) THEN
+    
+        IF(existe_produto(vNome) > 0) THEN RAISE erxiste; END IF;          
+        IF (vpro <= 0) THEN RAISE eValor; END IF; 
+               
+        UPDATE Produto
+        SET nome_produto = UPPER(vNome)
+        ,desc_produto = vDesc
+        ,imagem_produto = vImagem
+        ,vl_produto = vPro
+        ,clas_indic_produto = vClas
+        ,atv_produto = vAtv
+        ,dlc_produto = vDlc
+        ,base_produto = vBase
+        ,cd_desenvolvedor = vDesv
+        ,cd_distribuidor = vDist
+        ,cd_plataforma = vPlat
+        WHERE cd_produto = vCod;
+        
+        dbms_output.put_line('Produto/DLC de Código: [' || Lpad(vCod, '10', '0') || '] Atualizado com sucesso.');
+        COMMIT;    
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+     
+    EXCEPTION
+   
+    WHEN no_data_found THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar atualizar Produto de código [' || Lpad(vCod, '10', '0') || ']' || ' verifique se o valor informado é válido. ');  
+    
+         
+   
+   WHEN erCdError THEN
+   
+    RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar Produto de código [' || vCod || ']' || ' verifique se o código informado é válido. ');  
+
+    WHEN eFk_erro THEN
+    
+         RAISE_APPLICATION_ERROR(-20002, 'Erro ao cadastrar Produto [' || vNome || ']' || chr(10) || 'Verifique se o valor informado em: '  
+         || chr(10) || ' - Plataforma '
+         || chr(10) || ' - Desenvolvedor'
+         || chr(10) || ' - Distribuidor' 
+         || chr(10) || ' - Ou jogo Base (caso seja DLC)'
+         || chr(10) || ' Realmente existe no bando de dados.');    
+    
+    WHEN evalor THEN
+    
+        RAISE_APPLICATION_ERROR(-20201, 'Valor Inválido para: [' || vNome || ']'); 
+    
+    WHEN erxiste THEN
+    
+         RAISE_APPLICATION_ERROR(-20202, 'ERRO: Produto[' || vNome || ']' || ' Já está cadastrado no sistema.');
+    
+    WHEN OTHERS THEN
+    
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Produto [' || vNome || ']');
+
+ END sp_update_produto;

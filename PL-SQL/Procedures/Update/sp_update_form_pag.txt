@@ -1,0 +1,49 @@
+
+ CREATE OR REPLACE PROCEDURE sp_update_form_pag(
+vCod    IN  form_pag.cd_form_pag%type
+,vNome   IN  form_pag.nome%type
+ )  IS erxiste EXCEPTION; erCdError EXCEPTION; vCount number(1);
+ BEGIN
+     
+     SELECT COUNT(cd_form_pag) INTO vCount FROM form_pag WHERE cd_form_pag = vCod;
+     
+     IF(vCount > 0) THEN
+         IF(existe_form_pag(vNome) > 0) THEN RAISE erxiste; END IF;
+               
+        UPDATE Form_Pag
+        SET nome = UPPER(vNome)
+        WHERE cd_form_pag = vCod;
+      
+        dbms_output.put_line('Forma de pagamento de código [' || LPAD(vCod, 3, '0') || '] atualizada com sucesso.');
+        COMMIT;
+    
+    ELSE
+    
+        RAISE erCdError;
+    
+    END IF;
+    
+    EXCEPTION
+        
+        WHEN no_data_found THEN
+        
+        RAISE_APPLICATION_ERROR(-20201, 'Erro ao tentar atualizar forma de pagamento de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido.');
+                  
+        WHEN erxiste THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Forma de pagamento [' || vNome || ']' || ' Já está cadastrada no sistema.'); 
+         
+         WHEN erCdError Then
+         
+          RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar forma de pagamento de código [' || LPAD(vCod, 3, '0') || ']' || ' verifique se o código informado é válido.');
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Forma de pagamento [' || vNome || ']');
+                  
+ END sp_update_form_pag;
+ 
+ 
+  
+ 
+

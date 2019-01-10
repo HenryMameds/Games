@@ -1,0 +1,20 @@
+CREATE OR REPLACE TRIGGER trg_total
+AFTER INSERT ON item_pedido
+DECLARE
+vTotal pedido.vl_total_pedido%type;
+vPedido pedido.cd_pedido%type; 
+vCod vPedido%type;
+BEGIN
+     
+        SELECT faixa_id_pedido.CURRVAL INTO vCod FROM DUAL;
+        Select pe.cd_pedido Pedido, SUM(p.vl_produto -  it.desconto_item)AS "TL Pedido"
+        INTO vPedido, vTotal
+        From Produto p INNER JOIN item_pedido it ON (p.cd_produto = it.cd_produto)
+        INNER JOIN Pedido pe ON (it.cd_pedido = pe.cd_pedido)
+        where it.id_item = vCod
+        group by pe.cd_pedido;
+        
+        dbms_output.put_line('Total do pedido: '  ||  LPAD(vPedido, 10, '0') || ' atualizado para: ' || vTotal );
+         
+        UPDATE PEDIDO SET vl_total_pedido = vTotal where cd_pedido = vPedido;
+END;

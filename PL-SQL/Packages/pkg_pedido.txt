@@ -1,0 +1,156 @@
+CREATE OR REPLACE PACKAGE pkg_pedido
+IS
+    PROCEDURE sp_insert_pedido(vCliente cliente.cd_cliente%type,vPag pedido.cd_form_pag%type);
+    PROCEDURE sp_update_pedido(vCod pedido.cd_pedido%type, vSit pedido.situacao%type, vPag pedido.cd_form_pag%type);   
+    PROCEDURE sp_delete_pedido(vCod pedido.cd_pedido%type);  
+
+END; -- Fim Package Pedido
+
+
+/
+
+
+CREATE OR REPLACE PACKAGE BODY pkg_pedido --Corpo
+IS
+
+PROCEDURE sp_insert_pedido(
+vCliente cliente.cd_cliente%type
+,vPag pedido.cd_form_pag%type
+ )   IS 
+vCod pedido.cd_pedido%type; 
+vApelido cliente.nome_ex_cliente%type;
+eFk_Erro EXCEPTION;
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+ BEGIN
+     
+        select faixa_cd_pedido.nextval into vCod from dual;
+               
+        
+        SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+        
+         INSERT INTO Pedido
+         (cd_pedido, cd_cliente, dt_pedido,situacao, cd_form_pag )
+         VALUES
+         (vCod, vCliente, SYSDATE, UPPER('Em Aberto'), vPag );
+            
+         dbms_output.put_line('Pedido [' || LPAD(vCod, 10, '0') || '] aberto com sucesso para cliente: ' || vApelido);
+        COMMIT;
+        
+     
+    EXCEPTION
+        
+       WHEN dup_val_on_index THEN            
+            
+               RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+        WHEN no_data_found THEN
+        
+         RAISE_APPLICATION_ERROR(-20001, 'Valores não encontrados, verique se '
+         || chr(10) || ' - Codigo Cliente'
+         || chr(10) || ' - Forma de Pagamento'
+         || chr(10) || ' - Realmente Existem no bando de dados.'); 
+         
+        WHEN eFk_erro THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+                 || chr(10) || ' - Codigo Cliente'
+                 || chr(10) || ' - Forma de Pagamento'
+                 || chr(10) || ' - Realmente Existem no bando de dados.'); 
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar abrir pedido [' || LPAD(vCod, 10, '0') || ']' || ' para ' || vApelido);
+                  
+ END sp_insert_pedido;
+ 
+PROCEDURE sp_update_pedido(
+vCod pedido.cd_pedido%type
+,vSit pedido.situacao%type
+,vPag pedido.cd_form_pag%type
+
+ )   IS 
+vApelido cliente.nome_ex_cliente%type;
+eFk_Erro EXCEPTION;
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+
+ BEGIN    
+        
+        
+        SELECT nome_ex_cliente into vApelido from cliente where cd_cliente =(SELECT cd_cliente from pedido where cd_pedido = vCod);
+        
+        update pedido 
+        set situacao = UPPER(vSit)
+        ,cd_form_pag = vPag
+        where cd_pedido = vCod;
+            
+         dbms_output.put_line('Pedido [' || LPAD(vCod, 10, '0') || '] atualizado com sucesso para cliente: ' || vApelido);
+        COMMIT;
+        
+     
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+            RAISE_APPLICATION_ERROR(-20000, 'ERRO: Valores dúplicados');
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Valores não encontrados, verique se '
+             || chr(10) || ' - Codigo Pedido'
+             || chr(10) || ' - Forma de Pagamento'
+             || chr(10) || ' - Realmente Existem no bando de dados.'); 
+         
+        WHEN eFk_erro THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+             || chr(10) || ' - Codigo Pedido'
+             || chr(10) || ' - Forma de Pagamento'
+             || chr(10) || ' - Realmente Existem no bando de dados.'); 
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar pedido [' || LPAD(vCod, 10, '0') || ']' || ' para ' || vApelido);
+                  
+ END sp_update_pedido;
+ 
+PROCEDURE sp_delete_pedido(
+vCod pedido.cd_pedido%type
+
+ )   IS 
+ 
+erCdError EXCEPTION;
+vCount number(1);
+
+ BEGIN   
+        
+        select count(cd_pedido) into vCount from pedido where cd_pedido = vCod;
+        
+        IF(vCount > 0) THEN
+        
+            delete from pedido 
+            where cd_pedido = vCod;
+                
+             dbms_output.put_line('Pedido [' || LPAD(vCod, 10, '0') || '] apagado com sucesso! ');
+            COMMIT;
+            
+        ELSE
+        
+            RAISE erCdError;
+            
+        END IF;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar Pedido, verifique se o [' || LPAD(vCod, 10, '0') || '] informado é válido.');    
+        
+          WHEN erCdError THEN
+        
+             RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar apagar Pedido, verifique se o [' || LPAD(vCod, 10, '0') || '] informado é válido.'); 
+                                         
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar pedido de código: [' || LPAD(vCod, 10, '0') || ']' );
+ END sp_delete_pedido;
+ 
+END; -- FIm Package Body Pedido

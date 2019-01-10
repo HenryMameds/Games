@@ -1,0 +1,50 @@
+CREATE OR REPLACE PROCEDURE sp_delete_idioma_pro(
+vIdioma idioma_pro.cd_idioma%type
+,vProduto idioma_pro.cd_produto%type
+)
+    Is vNomeProd produto.nome_produto%type;
+       vNomeIdioma idioma.nome_idioma%type;
+       eFk_Erro EXCEPTION;
+       vCont number(1);
+       
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+    BEGIN
+    
+    SELECT count(cd_idioma) into vCont from idioma_pro where cd_produto = vProduto and cd_idioma = vIdioma;
+    
+    IF(vCont > 0) THEN 
+
+   SELECT nome_produto into vNomeProd from produto where cd_produto = vProduto;
+   SELECT nome_idioma into vNomeIdioma from idioma where cd_idioma = vIdioma;
+    
+    DELETE FROM idioma_pro
+    where cd_idioma = vIdioma and cd_produto = vProduto;
+
+    dbms_output.put_line('idioma [' || vNomeIdioma || '] Apagado com sucesso! Referente ao produto: [' || vNomeProd || ']');
+     COMMIT;
+     
+    ELSE 
+    
+    RAISE eFk_Erro; 
+    
+    END IF; 
+
+    EXCEPTION
+      
+       WHEN no_data_found THEN
+       
+        RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar idioma de código: [' || LPAD(vIdioma, 10, '0')|| ']' || chr(10) || 'Verifique se o código do idioma está correto.'  );
+        
+       WHEN eFk_erro THEN
+     
+        RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+        || chr(10) || ' - Idioma'
+        || chr(10) || ' - Produto'
+        || chr(10) || ' - Realmente existem no bando de dados.'); 
+         
+           
+       WHEN OTHERS THEN
+        
+        RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar o idioma, verifice se o codigo  [' ||  vIdioma || '] é válido' );
+              
+ END sp_delete_idioma_pro;

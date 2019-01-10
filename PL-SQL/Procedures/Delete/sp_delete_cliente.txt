@@ -1,0 +1,28 @@
+CREATE OR REPLACE PROCEDURE sp_delete_cliente(
+vCod cliente.cd_cliente%type
+
+ )   IS 
+vCount number(1);
+vNome cliente.nome_cliente%type;
+
+ BEGIN   
+        
+        SELECT nome_cliente into vNome from cliente where cd_cliente = vCod;
+
+        delete from cliente 
+        where cd_cliente = vCod;
+            
+         dbms_output.put_line('Cliente [' || vNome || '] apagado(a) com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar cliente, verifique se o [' || LPAD(vCod, 10, '0') || '] informado é válido.');  
+
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar cliente de código: [' || LPAD(vCod, 10, '0') || ']' );
+ 
+ END sp_delete_cliente;

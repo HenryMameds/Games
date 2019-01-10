@@ -1,0 +1,13 @@
+CREATE OR REPLACE FUNCTION existe_idioma(
+vNome idioma.nome_idioma%type
+)
+RETURN NUMBER
+IS vCont number;
+BEGIN
+    
+    SELECT count(nome_idioma) into vCont from idioma where nome_idioma = vNome;
+    
+    RETURN (vCont);
+
+    
+END;

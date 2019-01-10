@@ -1,0 +1,200 @@
+CREATE OR REPLACE PACKAGE pkg_cliente
+IS
+   
+PROCEDURE sp_insert_cliente(
+ vNome  IN  cliente.nome_cliente%type
+ ,vLogin IN cliente.login_cliente%type
+ ,vSobrenome IN cliente.cliente_sobrenome%type
+ ,vEmail IN cliente.email_cliente%type
+ ,vSenha IN cliente.senha_cliente%type
+ ,vData IN cliente.dt_nasc_cliente%type
+ ,vNomExibe IN cliente.nome_ex_cliente%type
+ );
+ 
+
+PROCEDURE sp_update_cliente(
+  vCod cliente.cd_cliente%type
+  ,vNome Cliente.nome_cliente%type
+ ,vLogin IN cliente.login_cliente%type
+ ,vSobrenome IN cliente.cliente_sobrenome%type
+ ,vEmail IN cliente.email_cliente%type
+ ,vSenha IN cliente.senha_cliente%type
+ ,vData IN cliente.dt_nasc_cliente%type
+ ,vNomExibe IN cliente.nome_ex_cliente%type
+ );
+ 
+PROCEDURE sp_delete_cliente(vCod cliente.cd_cliente%type);
+ 
+END; -- Fim Package 
+
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_cliente --Corpo
+IS
+
+PROCEDURE sp_insert_cliente(
+ vNome  IN  cliente.nome_cliente%type
+ ,vLogin IN cliente.login_cliente%type
+ ,vSobrenome IN cliente.cliente_sobrenome%type
+ ,vEmail IN cliente.email_cliente%type
+ ,vSenha IN cliente.senha_cliente%type
+ ,vData IN cliente.dt_nasc_cliente%type
+ ,vNomExibe IN cliente.nome_ex_cliente%type
+ )  IS vCod cliente.cd_cliente%type; 
+        erxiste_login EXCEPTION;
+        erxiste_email EXCEPTION;
+        erxiste_nome_ex_cliente EXCEPTION;
+        vSit varchar(42) := check_cliente(vLogin, vEmail, vNomExibe);
+ BEGIN
+    
+    IF(check_cliente(vLogin, vEmail, vNomExibe) = 'ok')   THEN 
+
+    SELECT faixa_cd_cliente.nextval INTO vCod FROM dual;
+
+    INSERT INTO Cliente
+    (cd_cliente, nome_cliente, login_cliente, cliente_sobrenome, email_cliente, senha_cliente, dt_nasc_cliente, nome_ex_cliente)
+    VALUES
+    (vCod, UPPER(vNome), UPPER(vLogin), vSobrenome, vEmail, vSenha, vData, UPPER(vNomExibe));
+        
+    dbms_output.put_line('Cliente [' || vNome || '] Cadastrado com sucesso.');
+    COMMIT;
+
+    ELSIF(vSit = 'Login já cadastrado') THEN RAISE erxiste_login;
+    
+    ELSIF(vSit = 'Email já cadastrado') THEN RAISE erxiste_email;
+    
+    ELSIF(vSit = 'Nome já cadastrado')  THEN RAISE erxiste_nome_ex_cliente;
+     
+    END IF;
+    
+    EXCEPTION
+        
+        WHEN dup_val_on_index THEN            
+            
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar Cliente [' || vNome || ']' || ' Codigo duplicado.');
+
+         WHEN erxiste_login THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Login [' || vLogin || ']' || ' Já está cadastrado no sistema.');
+
+         WHEN erxiste_email THEN
+        
+             RAISE_APPLICATION_ERROR(-20202, 'EROO: Email [' || vEmail || ']' || ' Já está cadastrado no sistema.');
+
+         WHEN erxiste_nome_ex_cliente THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Apelido [' || vNomExibe || ']' || ' Já está cadastrado no sistema.');
+
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar cadastrar Cliente [' || vNome || ']');
+                  
+ END sp_insert_cliente;
+ 
+PROCEDURE sp_update_cliente(
+  vCod cliente.cd_cliente%type
+  ,vNome Cliente.nome_cliente%type
+ ,vLogin IN cliente.login_cliente%type
+ ,vSobrenome IN cliente.cliente_sobrenome%type
+ ,vEmail IN cliente.email_cliente%type
+ ,vSenha IN cliente.senha_cliente%type
+ ,vData IN cliente.dt_nasc_cliente%type
+ ,vNomExibe IN cliente.nome_ex_cliente%type
+ )  IS  
+        erxiste_login EXCEPTION;
+        erxiste_email EXCEPTION;
+        erxiste_nome_ex_cliente EXCEPTION;
+        vSit varchar(42) := check_cliente(vLogin, vEmail, vNomExibe);
+        erCdError EXCEPTION;
+        vCount number(1);
+ BEGIN
+    
+    SELECT COUNT(cd_produto) INTO vCount from produto where cd_produto = vCod;
+    
+        IF(vCount > 0) THEN
+        
+        IF(check_cliente(vLogin, vEmail, vNomExibe) = 'ok')   THEN 
+    
+        UPDATE Cliente
+        SET nome_cliente = UPPER(vNome), cliente_sobrenome = vSobrenome, email_cliente = UPPER(vEmail),  senha_cliente = vSenha, nome_ex_cliente = UPPER(vNomExibe)
+        , login_cliente = vLogin, dt_nasc_cliente = vData
+        WHERE cd_cliente = vCod;
+    
+            
+        dbms_output.put_line('Cliente de código [' || LPAD(vCod, 10, '0') || '] Atualizado com sucesso.');
+        COMMIT;
+    
+        ELSIF(vSit = 'Login já cadastrado') THEN RAISE erxiste_login;
+        
+        ELSIF(vSit = 'Email já cadastrado') THEN RAISE erxiste_email;
+        
+        ELSIF(vSit = 'Nome já cadastrado')  THEN RAISE erxiste_nome_ex_cliente;
+         
+        END IF;
+        
+        ELSE
+        
+         RAISE erCdError;
+        
+        END IF;
+    
+    EXCEPTION
+        
+         WHEN erxiste_login THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Login [' || vLogin || ']' || ' Já está cadastrado no sistema.');
+
+         WHEN erxiste_email THEN
+        
+             RAISE_APPLICATION_ERROR(-20202, 'EROO: Email [' || vEmail || ']' || ' Já está cadastrado no sistema.');
+
+         WHEN erxiste_nome_ex_cliente THEN
+        
+         RAISE_APPLICATION_ERROR(-20202, 'EROO: Apelido [' || vNomExibe || ']' || ' Já está cadastrado no sistema.');
+        
+        WHEN no_data_found THEN
+         RAISE_APPLICATION_ERROR(-20201, 'Erro ao tentar atualizar cliente de código [' || LPAD(vCod, 10, '0') || ']' || ' verifique se o código informado é válido.');
+         
+         WHEN erCdError THEN
+         
+          RAISE_APPLICATION_ERROR(-20209, 'Erro ao tentar atualizar cliente de código [' || LPAD(vCod, 10, '0') || ']' || ' verifique se o código informado é válido.');
+        
+        WHEN OTHERS THEN
+            
+         RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar Cliente [' || vNome || ']');
+                  
+ END sp_update_cliente;
+ 
+
+PROCEDURE sp_delete_cliente(
+vCod cliente.cd_cliente%type
+
+ )   IS 
+vCount number(1);
+vNome cliente.nome_cliente%type;
+
+ BEGIN   
+        
+        SELECT nome_cliente into vNome from cliente where cd_cliente = vCod;
+
+        delete from cliente 
+        where cd_cliente = vCod;
+            
+         dbms_output.put_line('Cliente [' || vNome || '] apagado(a) com sucesso! ');
+        COMMIT;
+         
+    EXCEPTION
+                  
+        WHEN no_data_found THEN
+        
+             RAISE_APPLICATION_ERROR(-20001, 'Erro ao tentar apagar cliente, verifique se o [' || LPAD(vCod, 10, '0') || '] informado é válido.');  
+
+        WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar apagar cliente de código: [' || LPAD(vCod, 10, '0') || ']' );
+ 
+ END sp_delete_cliente;
+
+
+END; -- FIm Package
+

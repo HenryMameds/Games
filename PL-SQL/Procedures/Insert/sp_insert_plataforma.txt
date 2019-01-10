@@ -1,0 +1,34 @@
+CREATE OR REPLACE PROCEDURE sp_insert_plataforma(
+ vNome  IN  plataforma.nome_plataforma%type
+ 
+ )  IS vCod plataforma.cd_plataforma%type; erxiste EXCEPTION;
+ BEGIN
+    
+    IF(existe_plataforma(vNome) > 0) THEN RAISE erxiste; END IF;
+       
+    SELECT faixa_cd_plataforma.nextval INTO vCod FROM dual;
+    
+    INSERT INTO Plataforma
+    (cd_plataforma, nome_plataforma, dt_cadastro)
+    VALUES
+    (vCod, UPPER(vNome), SYSDATE);
+    
+    dbms_output.put_line('Plataforma [' || vNome || '] Cadastrada com sucesso.');
+    COMMIT;
+    
+    EXCEPTION
+                
+        WHEN dup_val_on_index THEN            
+        
+         RAISE_APPLICATION_ERROR(-20000, 'Erro ao cadastrar `Plataforma [' || vNome || ']' || ' Codigo duplicado.');
+              
+ 
+	WHEN erxiste THEN
+    
+         RAISE_APPLICATION_ERROR(-20202, 'ERRO: Plataforma[' || vNome || ']' || ' Já está cadastrada no sistema.');
+              
+        WHEN OTHERS THEN
+        
+             RAISE_APPLICATION_ERROR(-20003,'Erro desconhecido ao tentar cadastrar Plataforma [' || vNome || ']');
+                  
+ END sp_insert_plataforma;

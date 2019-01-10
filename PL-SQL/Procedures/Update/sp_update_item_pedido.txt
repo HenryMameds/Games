@@ -1,0 +1,55 @@
+CREATE OR REPLACE PROCEDURE sp_update_item_pedido(
+ vPedido pedido.cd_pedido%type
+ ,vProduto produto.cd_produto%type
+ ,vDesc item_pedido.desconto_item%type
+
+ )   IS 
+vCliente cliente.cd_cliente%type;
+vApelido cliente.nome_ex_cliente%type;
+vNome_Pro produto.nome_produto%type;
+
+--EXCEPTION
+eFk_Erro EXCEPTION;
+evalor EXCEPTION;
+PRAGMA EXCEPTION_INIT(eFk_Erro, -02291);
+ BEGIN
+    
+   SELECT cd_cliente into vCLiente from cliente where cd_cliente = (select cd_cliente from pedido where cd_pedido = vPedido);
+   SELECT nome_ex_cliente into vApelido from cliente where cd_cliente = vCliente;
+   SELECT nome_produto into vNome_Pro from produto where cd_produto = vProduto;  
+    
+    IF(vDesc < 0 ) THEN RAISE evalor; END IF;
+    
+    UPDATE item_pedido
+    SET desconto_item = vDesc
+    WHERE cd_pedido = vPedido and cd_produto = vProduto;
+        
+     dbms_output.put_line('Desconto atualizado para Produto/Item  [' || vNome_Pro || '] do pedido  ' || LPAD(vPedido, 10, '0') || ' de ' || vApelido );
+    COMMIT;
+           
+    EXCEPTION
+    
+    WHEN no_data_found THEN
+        
+           RAISE_APPLICATION_ERROR(-20001, 'Valores não encontrados, verique se '
+             || chr(10) || ' - Produto'
+             || chr(10) || ' - Pedido'      
+             || chr(10) || ' - Realmente existem no bando de dados.'); 
+             
+     WHEN eFk_erro THEN
+     
+         RAISE_APPLICATION_ERROR(-20002, 'Valores não encontrados, verique se '
+         || chr(10) || ' - Produto'
+         || chr(10) || ' - Pedido'
+         || chr(10) || ' - Realmente existem no bando de dados.'); 
+         
+     WHEN evalor THEN
+    
+        RAISE_APPLICATION_ERROR(-20201, 'Valor informado no desconto é inválido.'); 
+                 
+     WHEN OTHERS THEN
+            
+      RAISE_APPLICATION_ERROR(-20003, 'Erro desconhecido ao tentar atualizar item [' || vNome_pro || ']' || ' a coleção de ' || vApelido);
+                  
+ END sp_update_item_pedido;
+ 
