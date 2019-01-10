@@ -1,0 +1,99 @@
+drop sequence faixa_cd_plataforma;
+drop sequence faixa_cd_distribuidor;
+drop sequence faixa_cd_desenvolvedor;
+drop sequence faixa_cd_idioma;
+drop sequence faixa_cd_categoria;
+drop sequence faixa_cd_cliente;
+drop sequence faixa_cd_favoritos;
+drop sequence faixa_cd_pedido;
+drop sequence faixa_cd_id_pedido;
+drop sequence faixa_cd_key;
+drop sequence faixa_cd_form_pag;
+
+
+create sequence faixa_cd_plataforma
+start with 1
+increment by 1
+maxvalue 999
+nocache
+nocycle;
+
+
+create sequence faixa_cd_distribuidor
+start with 1
+increment by 1
+maxvalue 99999
+nocache
+nocycle;
+
+
+create sequence faixa_cd_desenvolvedor
+start with 1
+increment by 1
+maxvalue 99999
+nocache
+nocycle;
+
+
+create sequence faixa_cd_idioma
+start with 1
+increment by 1
+maxvalue 999
+nocache
+nocycle;
+
+create sequence faixa_cd_produto
+start with 1
+increment by 1
+maxvalue 9999999999
+nocache
+nocycle;
+
+create sequence faixa_cd_categoria
+start with 1
+increment by 1
+maxvalue 99999
+nocache
+nocycle;
+
+create sequence faixa_cd_cliente
+start with 1
+increment by 1
+maxvalue 9999999999
+nocache
+nocycle;
+
+create sequence faixa_cd_favoritos
+start with 1
+increment by 1
+maxvalue 9999999999
+nocache
+nocycle;
+
+create sequence faixa_cd_pedido
+start with 1
+increment by 1
+maxvalue 9999999999
+nocache
+nocycle;
+
+create sequence faixa_id_pedido
+start with 1
+increment by 1
+maxvalue 9999999999
+nocache
+nocycle;
+
+create sequence faixa_cd_key
+start with 1
+increment by 1
+maxvalue 9999999999
+nocache
+nocycle;
+
+create sequence faixa_cd_form_pag
+start with 1
+increment by 1
+maxvalue 999
+nocache
+nocycle;
