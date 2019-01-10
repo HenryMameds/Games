@@ -1,0 +1,81 @@
+
+--Dados da Tabela Plataforma
+
+insert into plataforma values(1, 'PC', sysdate);
+insert into plataforma values(2, 'X-BOX 360', sysdate);
+insert into plataforma values(3, 'PS3', sysdate);
+
+--Dados da Tabela Distribuidor
+
+insert into distribuidor values(1, 'AOEX TURBO GAMES', 'WWW.AEOX.COM.BR', sysdate);
+insert into distribuidor values(2, 'BLEAKAOUT FACOTRY','WWWW.BBFCT.COM', sysdate);
+
+--Dados da Tabela Desenvolvedor
+
+insert into desenvolvedor values(1, 'ROX EVOLUTION', 'WWW.ROXEVO.NET', sysdate);
+insert into desenvolvedor values(2, 'ATLAS REACTION', 'WWW.ATLASGAMES.COM', sysdate);
+
+--Dados da Tabela Categoria
+
+insert into categoria values(1, 'Ação', 'Muita Ação', sysdate);
+insert into categoria values(2, 'Terror', 'Muito Terror', sysdate);
+
+--Dados da Tabela Idioma
+
+insert into idioma values(1, 'PTB', 'Portugues Brasil', sysdate);
+insert into idioma values(2, 'ENG', 'Ingles', sysdate);
+
+--Dados da Tabela Produto
+
+insert into produto values(1, 'OVERWATCH', 'MELHOR FPS', 'IMAGEM', 60.00, '10', 1, 0, null, '25-07-1998', sysdate, 1, 2, 1);
+insert into produto values(2, 'CHOSEN WAY', 'GG JUNGLE', 'IMAGEM DO WAY', 15.00, '5', 1, 1, 1, '25-07-1998', sysdate, 1, 2, 1);
+
+--Dados da Tabela Idioma_Pro
+
+insert into idioma_pro values(1, 1);
+insert into idioma_pro values(1, 2);
+insert into idioma_pro values(2, 1);
+
+--Dados da Tabela Sub_Cat
+
+insert into sub_cat values(1, 2, sysdate);
+insert into sub_cat values(1, 1, sysdate);
+insert into sub_cat values(2, 1, sysdate);
+
+--Dados da Tabela Cliente
+
+insert into cliente values(1, 'Henrique', 'Henrique_Mamede', 'Mamede', 'hms.live@outlook.com', 'mameds13', '24-11-1999', 'Mameds_Joker');
+insert into cliente values(2, 'Guilherme', 'Guilherme_Correa', 'Correa', 'gui123Snow.@gmail.com', 'gui123Snow', '24-11-1992', 'SnowGui');
+
+--Dados da Tabela Favoritos
+
+insert into favoritos values (1, 2, sysdate);
+insert into favoritos values (2, 1, sysdate);
+
+--Dados da Tabela Form_Pag
+
+insert into form_pag values (1, 'null', sysdate, 'crédito');
+insert into form_pag values (2, 'null', sysdate, 'boleto');
+insert into form_pag values (3, 'null', sysdate, 'paypal');
+insert into form_pag values (4, 'null', sysdate, 'pagseguro');
+
+--Dados da Tabela Pedido
+
+insert into pedido values (1, 2, null, sysdate, 'pago', 3);
+insert into pedido values (2, 1, null, sysdate, 'pago', 1);
+
+--Dados da Tabela Item_Pedido
+
+insert into item_pedido values(1, 1, 1, null);
+insert into item_pedido values(2, 2, 2, null);
+
+--Dados da Tabela Chaves
+
+insert into chaves values (1,1, sysdate, 'hms13xbox360', 1);
+insert into chaves values (2,1, sysdate, 'gcgsika2019', 1);
+insert into chaves values (3,1, sysdate, 'gcgsony2018', 0);
+
+--Dados da Tabela Coleção
+insert into colecao values(1, 1, 1, sysdate);
+insert into colecao values(2, 2, 1 ,sysdate);
+
